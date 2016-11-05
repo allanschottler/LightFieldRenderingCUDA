@@ -85,7 +85,7 @@ CUDAManager::CUDAManager() :
 
 CUDAManager::~CUDAManager()
 {
-    //pthread_mutex_destroy( &_mutex );
+    pthread_mutex_destroy( &_mutex );
 }
 
 

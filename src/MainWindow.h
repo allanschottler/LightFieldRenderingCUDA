@@ -1,14 +1,15 @@
 /* 
  * File:   MainWindow.h
  * Author: allan
- *
- * Created on April 12, 2016, 11:49 PM
  */
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <string>
+#include <gtk/gtk.h>
+
+#include "osggtkdrawingarea.h"
 
 class MainWindow 
 {
@@ -18,11 +19,30 @@ public:
     
     virtual ~MainWindow();
     
+    void show() { gtk_widget_show_all( GTK_WIDGET( _dialog ) ); };
+    
+    OSGGTKDrawingArea& getCanvas() { return _canvas; };
     
 private:
-        
+
+    // CALLBACKS
+    static gboolean onDestroy();
+    static gboolean onIdle( gpointer pointer );
+
+    static gboolean onQuitButtonClicked( GtkWidget* button, gpointer pointer );
+    static gboolean onAboutButtonClicked( GtkWidget* button, gpointer pointer );
+    
     std::string _title;
-     
+    
+    OSGGTKDrawingArea _canvas;
+    
+    //Dialogs
+    GtkWidget* _dialog;
+    GtkWidget* _aboutDialog;
+    
+    //Menu
+    GtkWidget* _quitButton;
+    GtkWidget* _aboutButton;     
 };
 
 #endif /* MAINWINDOW_H */

@@ -1,8 +1,6 @@
 /* 
  * File:   LightFieldApplication.h
  * Author: allan
- *
- * Created on April 12, 2016, 11:48 PM
  */
 
 #ifndef LIGHTFIELDAPPLICATION_H
@@ -25,6 +23,8 @@ private:
     
     LightFieldApplication();
     
+    osg::ref_ptr< osg::Group > createLightFieldRender();
+
     
     static LightFieldApplication* _instance;
     

@@ -42,17 +42,17 @@ GTKINCLUDE  = -I/home/p/libs/libsgtk_64/include/gtkglext-1.0 -I/home/p/libs/libs
 GLINCLUDE   = -I/home/p/libs/freeglut/2.6.0/include -I/home/v/allanws/v3o2/dependencies/ext/glew/include
 OSGINCLUDE  = -I/local/allanws/v3o2/dependencies/ext/OSG/include  
 CUDAINCLUDE = -I/local/allanws/v3o2/dependencies/ext/cuda_Linux64e6/include
-OCVINCLUDE  = -I/home/p/libs/OpenCV-2.4.0/include/opencv
+#OCVINCLUDE  = -I/home/p/libs/OpenCV-2.4.0/include/opencv2
 
-INCLUDE = $(GTKINCLUDE) $(OSGINCLUDE) $(GLINCLUDE) $(CUDAINCLUDE) $(OCVINCLUDE)
+INCLUDE = $(GTKINCLUDE) $(OSGINCLUDE) $(GLINCLUDE) $(CUDAINCLUDE) #$(OCVINCLUDE)
 
 GTKLIBS = -L/home/p/libs/libsgtk_64/lib -L/usr/lib64 -lgtkglext-x11-1.0 -lgdkglext-x11-1.0 -lGLU -lGL -lXmu -lXt -lXxf86vm -lXext -lX11 -lgtk-x11-2.0 -lpangox-1.0 -lgdk-x11-2.0 -lXi -lXinerama -lXext -latk-1.0 -lpangoft2-1.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lSM -lICE -lX11 -lgio-2.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lrt -lglib-2.0
 OSGLIBS = -L/local/allanws/v3o2/dependencies/ext/OSG/lib/Linux64e6 -losg -losgUtil -losgGA -losgDB -losgText -losgViewer -losgSim -lOpenThreads -fopenmp
 GLLIB   = -L/home/p/libs/freeglut/2.6.0/lib/Linux64e6 -L/home/v/allanws/v3o2/dependencies/ext/glew/lib/Linux64e6 -lGL -lGLU -lglut -lGLEW -lpthread
 CUDALIB = -L/local/allanws/v3o2/dependencies/ext/cuda_Linux64e6/lib64 -lcudart
-OCVLIB  = -L/home/p/libs/OpenCV-2.4.0/lib -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_gpu -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_nonfree -lopencv_objdetect -lopencv_photo -lopencv_stitching -lopencv_ts -lopencv_video -lopencv_videostab
+#OCVLIB  = -L/home/p/libs/OpenCV-2.4.0/lib -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_gpu -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_nonfree -lopencv_objdetect -lopencv_photo -lopencv_stitching -lopencv_ts -lopencv_video -lopencv_videostab
 
-LIBSDIR = $(GTKLIBS) $(OSGLIBS) $(GLLIB) $(CUDALIB) $(OCVLIB)
+LIBSDIR = $(GTKLIBS) $(OSGLIBS) $(GLLIB) $(CUDALIB)# $(OCVLIB)
 
 $(BINDIR)/$(TARGET) : $(OBJECTS) $(NVOBJECTS)
 	@$(LINKER) $@ $(LFLAGS) $(INCLUDE) $(NVOBJECTS) $(OBJECTS) $(LIBSDIR) 
