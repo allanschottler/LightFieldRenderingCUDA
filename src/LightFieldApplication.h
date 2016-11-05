@@ -11,6 +11,8 @@
 #include <osg/Node>
 #include <osg/Geode>
 
+#include "LightFieldImage.h"
+
 class LightFieldApplication 
 {
 public:
@@ -19,11 +21,13 @@ public:
     
     static LightFieldApplication* getInstance();
     
+    void loadLightField( std::string lightFieldHeader );
+    
 private:
     
-    LightFieldApplication();
+    LightFieldApplication();   
     
-    osg::ref_ptr< osg::Group > createLightFieldRender();
+    osg::ref_ptr< osg::Group > createLightFieldNode();
 
     
     static LightFieldApplication* _instance;
@@ -31,6 +35,8 @@ private:
     MainWindow* _window;
     
     osg::ref_ptr< osg::Group > _scene;    
+    
+    LightFieldImage* _lightFieldImage;
 };
 
 #endif /* LIGHTFIELDAPPLICATION_H */

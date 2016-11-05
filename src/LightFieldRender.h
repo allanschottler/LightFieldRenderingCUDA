@@ -37,6 +37,10 @@ public:
     
     virtual ~LightFieldRender();
     
+    void render();
+    
+    void getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax );
+    
 private:
 
     LightFieldImage* _lightFieldImage;

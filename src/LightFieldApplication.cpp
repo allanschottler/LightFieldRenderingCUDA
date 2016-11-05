@@ -4,6 +4,8 @@
  */
 
 #include "LightFieldApplication.h"
+#include "LightFieldImageLoader.h"
+#include "LightFieldDrawable.h"
 
 LightFieldApplication* LightFieldApplication::_instance = 0;
 
@@ -15,10 +17,7 @@ LightFieldApplication::LightFieldApplication() :
     _scene = new osg::Group;
     _scene->setDataVariance( osg::Object::DYNAMIC );
     _scene->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF ); 
-    
-    // Build scene
-    _scene->addChild( createLightFieldRender() );
-    
+        
     _window->getCanvas().setCameraManipulator( manipulator );
     _window->getCanvas().getCamera()->setClearColor( osg::Vec4( .0f, .0f, .0f, 1.f ) );
     _window->getCanvas().setSceneData( _scene );
@@ -42,20 +41,23 @@ LightFieldApplication* LightFieldApplication::getInstance()
 }
 
 
-osg::ref_ptr< osg::Group > LightFieldApplication::createLightFieldRender()
+void LightFieldApplication::loadLightField( std::string lightFieldHeader )
 {
-    osg::ref_ptr< osg::Group > lightfieldGroup = new osg::Group;
+    _lightFieldImage = LightFieldImageLoader().load( lightFieldHeader );
+    
+    _scene->addChild( createLightFieldNode() );
+}
+
+
+osg::ref_ptr< osg::Group > LightFieldApplication::createLightFieldNode()
+{
+    LightFieldRender* lightFieldRender = new LightFieldRender( _lightFieldImage );    
+    osg::ref_ptr< osg::Drawable > lightFieldDrawable = new LightFieldDrawable( lightFieldRender );
+        
     osg::ref_ptr< osg::Geode > lightfieldGeode = new osg::Geode;
-    osg::ref_ptr< osg::Geometry > lightfieldGeometry = new osg::Geometry;
+    lightfieldGeode->addDrawable( lightFieldDrawable );
     
-//    osg::ref_ptr< osg::Vec3Array > vertexArray = new osg::Vec3Array;
-//    osg::ref_ptr< osg::Vec4Array > colorArray = new osg::Vec4Array;
-    //osg::ref_ptr< osg::Vec3Array > vertexArray = new osg::Vec3Array;
-    
-//    lightfieldGeometry->setVertexArray();
-    
-    
-    lightfieldGeode->addDrawable( lightfieldGeometry );
+    osg::ref_ptr< osg::Group > lightfieldGroup = new osg::Group;
     lightfieldGroup->addChild( lightfieldGeode );
     
     return lightfieldGroup;
