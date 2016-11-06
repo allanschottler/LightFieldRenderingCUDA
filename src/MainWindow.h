@@ -29,6 +29,7 @@ private:
     static gboolean onDestroy();
     static gboolean onIdle( gpointer pointer );
 
+    static gboolean onOpenButtonClicked( GtkWidget* button, gpointer pointer );
     static gboolean onQuitButtonClicked( GtkWidget* button, gpointer pointer );
     static gboolean onAboutButtonClicked( GtkWidget* button, gpointer pointer );
     
@@ -41,6 +42,7 @@ private:
     GtkWidget* _aboutDialog;
     
     //Menu
+    GtkWidget* _openButton;
     GtkWidget* _quitButton;
     GtkWidget* _aboutButton;     
 };

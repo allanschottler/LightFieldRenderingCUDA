@@ -21,7 +21,7 @@ public:
     
     static LightFieldApplication* getInstance();
     
-    void loadLightField( std::string lightFieldHeader );
+    bool loadLightField( std::string lightFieldHeader );
     
 private:
     

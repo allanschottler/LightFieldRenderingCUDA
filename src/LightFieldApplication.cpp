@@ -41,11 +41,20 @@ LightFieldApplication* LightFieldApplication::getInstance()
 }
 
 
-void LightFieldApplication::loadLightField( std::string lightFieldHeader )
+bool LightFieldApplication::loadLightField( std::string lightFieldHeader )
 {
-    _lightFieldImage = LightFieldImageLoader().load( lightFieldHeader );
+    LightFieldImageLoader loader;
+    
+    if( !loader.load( lightFieldHeader ) )
+        return false;
+    
+    //clear scene
+    
+    _lightFieldImage = loader.getLightFieldImage();
     
     _scene->addChild( createLightFieldNode() );
+    
+    return true;
 }
 
 

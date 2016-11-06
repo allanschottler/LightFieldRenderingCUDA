@@ -12,17 +12,21 @@ class LightFieldImageLoader
 {
 public:
     
-    LightFieldImageLoader() {};
+    LightFieldImageLoader() : _lightFieldImage( nullptr ) {};
     
     virtual ~LightFieldImageLoader() {};
     
-    LightFieldImage* load( std::string headerPath );
+    bool load( std::string headerPath );
+    
+    LightFieldImage* getLightFieldImage() { return _lightFieldImage; };
     
 private:
     
-    void readHeader();
+    bool readHeader();
     
     LightFieldImage::MicroImage readMicroImage( std::string imagePath );
+    
+    std::string _folderPath;
     
     std::string _headerPath;
     

@@ -14,7 +14,7 @@ MainWindow::MainWindow( std::string title ) :
     GtkBuilder* builder = gtk_builder_new();
     
     std::string gladePath( g_get_current_dir() );
-    gladePath.append( "/../data/glade/MainWindow.glade" );
+    gladePath.append( "/data/glade/MainWindow.glade" );
     
     if( !gtk_builder_add_from_file( builder, gladePath.c_str(), &error ) )
     {
@@ -35,6 +35,7 @@ MainWindow::MainWindow( std::string title ) :
     
     _aboutDialog = GTK_WIDGET( gtk_builder_get_object( builder, "aboutdialog1" ) );  
     
+    _openButton = GTK_WIDGET( gtk_builder_get_object( builder, "imagemenuitem2" ) );
     _quitButton = GTK_WIDGET( gtk_builder_get_object( builder, "imagemenuitem5" ) );
     _aboutButton = GTK_WIDGET( gtk_builder_get_object( builder, "imagemenuitem10" ) );
         
@@ -43,6 +44,7 @@ MainWindow::MainWindow( std::string title ) :
     g_signal_connect( G_OBJECT( _dialog ), "destroy", G_CALLBACK( &MainWindow::onDestroy ), NULL );
     g_signal_connect( G_OBJECT( _dialog ), "delete_event", G_CALLBACK( &MainWindow::onDestroy ), NULL );    
     
+    g_signal_connect( G_OBJECT( _openButton ), "activate", G_CALLBACK( &MainWindow::onOpenButtonClicked ), _dialog );
     g_signal_connect( G_OBJECT( _quitButton ), "activate", G_CALLBACK( &MainWindow::onQuitButtonClicked ), _dialog );
     g_signal_connect( G_OBJECT( _aboutButton ), "activate", G_CALLBACK( &MainWindow::onAboutButtonClicked ), _dialog );
         
@@ -70,6 +72,44 @@ gboolean MainWindow::onIdle( gpointer pointer )
         ThreadManager::getInstance()->checkThreads();
     
     dialog->_canvas.queueDraw();
+    
+    return TRUE;
+}
+
+gboolean MainWindow::onOpenButtonClicked( GtkWidget* button, gpointer pointer )
+{
+    gpointer result = g_object_get_data( ( GObject* ) pointer, "THIS" );
+    
+    if( result == NULL )
+        return FALSE;
+    
+    MainWindow* dialog = reinterpret_cast< MainWindow* >( result );
+    
+    GtkWidget* chooseDialog;
+    chooseDialog = gtk_file_chooser_dialog_new( "Open File",
+                                          GTK_WINDOW( dialog->_dialog ),
+                                          GTK_FILE_CHOOSER_ACTION_OPEN,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                          NULL );
+    
+    if( gtk_dialog_run( GTK_DIALOG( chooseDialog ) ) == GTK_RESPONSE_ACCEPT )
+    {
+        char *filename;
+        filename = gtk_file_chooser_get_filename( GTK_FILE_CHOOSER( chooseDialog ) );        
+        std::string filenameStr( filename );
+        gtk_window_set_title( GTK_WINDOW( dialog->_dialog ), dialog->_title.c_str() );
+        
+        if( LightFieldApplication::getInstance()->loadLightField( filenameStr ) )
+        {
+            std::string newTitle( dialog->_title + " - " + filenameStr );
+            gtk_window_set_title( GTK_WINDOW( dialog->_dialog ), newTitle.c_str() );
+        }
+        
+        g_free( filename );
+    }
+    
+    gtk_widget_destroy( chooseDialog );
     
     return TRUE;
 }
