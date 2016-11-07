@@ -47,9 +47,7 @@ bool LightFieldApplication::loadLightField( std::string lightFieldHeader )
     
     if( !loader.load( lightFieldHeader ) )
         return false;
-    
-    //clear scene
-    
+        
     _lightFieldImage = loader.getLightFieldImage();
     
     _scene->addChild( createLightFieldNode() );

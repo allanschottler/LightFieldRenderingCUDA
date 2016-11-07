@@ -8,6 +8,8 @@
 
 #include "LightFieldImage.h"
 
+#include <string>
+
 class LightFieldImageLoader 
 {
 public:

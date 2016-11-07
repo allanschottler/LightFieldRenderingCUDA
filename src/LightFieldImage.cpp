@@ -9,6 +9,8 @@
 
 #include "LightFieldImage.h"
 
+#include <osg/Image>
+
 LightFieldImage::LightFieldImage( unsigned int nRows, unsigned int nCollumns ) :
     _nRows( nRows ),
     _nCollumns( nCollumns )

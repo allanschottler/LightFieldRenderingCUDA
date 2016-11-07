@@ -6,13 +6,13 @@
 #ifndef LIGHTFIELDIMAGE_H
 #define	LIGHTFIELDIMAGE_H
 
-#include <osg/Image>
+#include <vector>
 
 class LightFieldImage 
 {
 public:
     
-    typedef osg::ref_ptr< osg::Image > MicroImage;
+    typedef std::vector< unsigned char > MicroImage;
     
     LightFieldImage( unsigned int nRows, unsigned int nCollumns );
     

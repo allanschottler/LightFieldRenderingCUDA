@@ -14,7 +14,7 @@
 TARGET   = lfr
 
 CC       = g++	
-NVCC     = /local/allanws/v3o2/dependencies/ext/cuda/bin/nvcc
+NVCC     = /local/allanws/v3o2/dependencies/ext/cuda_Linux64e6/bin/nvcc
 # compiling flags here
 CFLAGS   = -Wall -g -I. -std=c++11 -D_GLIBCXX_PARALLEL
 NVFLAGS  = -lGL -lGLU -lglut -lpthread -lGLEW -lcudart -arch=sm_20 
@@ -38,7 +38,7 @@ NVSOURCES  := $(wildcard $(SRCDIR)/*.cu)
 NVOBJECTS:= $(NVSOURCES:$(SRCDIR)/%.cu=$(OBJDIR)/%.cu.o)
 rm       = rm -f
 
-GTKINCLUDE  = -I/home/p/libs/libsgtk_64/include/gtkglext-1.0 -I/home/p/libs/libsgtk_64/lib/gtkglext-1.0/include -I/home/p/libs/libsgtk_64/include/gtk-2.0 -I/home/p/libs/libsgtk_64/lib/gtk-2.0/include -I/home/p/libs/libsgtk_64/include/pango-1.0 -I/home/p/libs/libsgtk_64/include/gio-unix-2.0/ -I/home/p/libs/libsgtk_64/include -I/home/p/libs/libsgtk_64/include/gdk-pixbuf-2.0 -I/home/p/libs/libsgtk_64/include/cairo -I/home/p/libs/libsgtk_64/include/glib-2.0 -I/home/p/libs/libsgtk_64/lib/glib-2.0/include -I/home/p/libs/libsgtk_64/include/pixman-1 -I/home/p/libs/libsgtk_64/include/freetype2 -I/home/p/libs/libsgtk_64/include/libpng15 -I/home/p/libs/libsgtk_64/include/atk-1.0
+GTKINCLUDE  = -I/home/p/libs/libsgtk_64/include/gtkglext-1.0 -I/home/p/libs/libsgtk_64/lib/gtkglext-1.0/include -I/home/p/libs/libsgtk_64/include/gtk-2.0 -I/home/p/libs/libsgtk_64/lib/gtk-2.0/include -I/home/p/libs/libsgtk_64/include/pango-1.0 -I/home/p/libs/libsgtk_64/include/gio-unix-2.0/ -I/home/p/libs/libsgtk_64/include -I/home/p/libs/libsgtk_64/include/gdk-pixbuf-2.0 -I/home/p/libs/libsgtk_64/include/cairo -I/home/p/libs/libsgtk_64/include/glib-2.0 -I/home/p/libs/libsgtk_64/lib/glib-2.0/include -I/home/p/libs/libsgtk_64/include/pixman-1 -I/home/p/libs/libsgtk_64/include/freetype2 -I/home/p/libs/libsgtk_64/include/libpng15 -I/home/p/libs/libsgtk_64/include/atk-1.0 -lpng15
 GLINCLUDE   = -I/home/p/libs/freeglut/2.6.0/include -I/home/v/allanws/v3o2/dependencies/ext/glew/include
 OSGINCLUDE  = -I/local/allanws/v3o2/dependencies/ext/OSG/include  
 CUDAINCLUDE = -I/local/allanws/v3o2/dependencies/ext/cuda_Linux64e6/include
