@@ -8,6 +8,7 @@
 LightFieldDrawable::LightFieldDrawable( LightFieldRender* lightFieldRender ) :
     _lightFieldRender( lightFieldRender )
 {
+    setUseDisplayList( false );
 }
 
 

@@ -51,6 +51,8 @@ public:
     
     void getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax );
     
+    void initLightFieldTexture( float* texels, int width, int height );
+    
     void initPBO();
     
     void initCudaBuffers( uint*& d_output, float*& d_depthBuffer );
@@ -73,7 +75,10 @@ private:
     
     /* Buffer intermediário para passagem de dados para a placa */
     float* _lightFieldTexels;
-
+    
+    /* Array com os valores do volume (recebe textura 3D) */
+    cudaArray* _lightFieldArray;
+    
     /* Estrutura de parâmetros passados para a GPU */
     KernelParameters _kernelParameters;
 
@@ -92,7 +97,7 @@ private:
     
     /* Buffer de profundidade do OpenGL */
     float* _depthBuffer;    
-    
+        
     /* Calculo de fps */
     float _fps;
     unsigned int _frameCount;

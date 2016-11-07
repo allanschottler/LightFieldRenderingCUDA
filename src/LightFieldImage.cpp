@@ -9,8 +9,6 @@
 
 #include "LightFieldImage.h"
 
-#include <osg/Image>
-
 LightFieldImage::LightFieldImage( unsigned int nRows, unsigned int nCollumns ) :
     _nRows( nRows ),
     _nCollumns( nCollumns )
@@ -34,4 +32,17 @@ LightFieldImage::MicroImage LightFieldImage::getMicroImage( unsigned int index1d
 unsigned int LightFieldImage::getIndex1d( unsigned int row, unsigned int collumn )
 {
     return row * _nCollumns + collumn;
+}
+
+
+float* LightFieldImage::getTexels()
+{
+    return nullptr;
+}
+
+
+void LightFieldImage::getDimensions( int& width, int& height )
+{
+    width = _nRows;
+    height = _nCollumns;
 }

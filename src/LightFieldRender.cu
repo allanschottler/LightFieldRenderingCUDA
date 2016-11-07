@@ -12,7 +12,7 @@
 
 __constant__ LightFieldRender::KernelParameters _cudaKernelParameters;
 
-texture < float, 2 > _lightfieldTexture;
+texture< float, 2 > _lightfieldTexture;
 
 struct Ray
 {
@@ -67,6 +67,37 @@ float LightFieldRender::renderKernel( dim3 gridSize, dim3 blockSize, uint* d_out
 
     return CUDAManager::getInstance()->stopClock( clock );
 }
+
+
+void LightFieldRender::initLightFieldTexture( float* texels, int width, int height )
+{
+    cudaExtent volumeSize = make_cudaExtent( width, height, 1 );
+
+    // Criar um array 3D
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc< float >();
+
+    CUDAManager::getInstance()->collectError( 
+        cudaMalloc3DArray( &_lightFieldArray, &channelDesc, volumeSize ) );
+
+    // Copia os dados para o array 3D
+    cudaMemcpy3DParms copyParams = { 0 };
+    copyParams.srcPtr = make_cudaPitchedPtr( texels, width * sizeof( float ), width, height );
+    copyParams.dstArray = _lightFieldArray;
+    copyParams.extent = volumeSize;
+    copyParams.kind = cudaMemcpyHostToDevice;
+    CUDAManager::getInstance()->collectError( cudaMemcpy3D( &copyParams ) );
+
+    // Inicializa os parametros de textura
+    _lightfieldTexture.normalized = true;                       // Acesso com coordenadas de textura normalizadas
+    _lightfieldTexture.filterMode = cudaFilterModeLinear;       // Interpolação linear.
+    _lightfieldTexture.addressMode[ 0 ] = cudaAddressModeClamp; // faz um clamp nas coordenadas de textura
+    _lightfieldTexture.addressMode[ 1 ] = cudaAddressModeClamp;
+
+    // Associa o array a textura
+    CUDAManager::getInstance()->collectError( 
+        cudaBindTextureToArray( _lightfieldTexture, _lightFieldArray, channelDesc ) );
+}
+
 
 void LightFieldRender::initKernelParameters()
 {    

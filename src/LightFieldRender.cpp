@@ -19,6 +19,12 @@ cudaGraphicsResource* _cudaPBOResource;
 LightFieldRender::LightFieldRender( LightFieldImage* lightFieldImage ) :
     _lightFieldImage( lightFieldImage )
 {
+    int width, height;
+    _lightFieldImage->getDimensions( width, height );
+    
+    initLightFieldTexture( _lightFieldImage->getTexels(), width, height );
+    
+    CUDAManager::getInstance()->setDefaultDevice();
 }
 
 
@@ -65,14 +71,6 @@ void LightFieldRender::render()
     _screenWidth = viewport[ 2 ];
     _screenHeight = viewport[ 3 ];
 
-    initPBO();
-    
-    updateParameters();
-
-    // Recupera a matriz modelView do OpenGL
-    GLfloat modelView[ 16 ];
-    glGetFloatv( GL_MODELVIEW_MATRIX, modelView );
-
     dim3 blockSize( 16, 16 );
     dim3 gridSize = dim3( CUDAManager::getInstance()->iDivUp( _screenWidth, blockSize.x ),
                           CUDAManager::getInstance()->iDivUp( _screenHeight, blockSize.y ) );
@@ -80,8 +78,10 @@ void LightFieldRender::render()
     uint* d_output;
     float* d_depthBuffer;
 
-    initCudaBuffers( d_output, d_depthBuffer );
+    initPBO();    
+    updateParameters();
     initKernelParameters();
+    initCudaBuffers( d_output, d_depthBuffer );
 
     float elapsedTime = renderKernel( gridSize, blockSize, d_output, d_depthBuffer );
 

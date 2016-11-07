@@ -24,6 +24,10 @@ public:
     
     unsigned int getIndex1d( unsigned int row, unsigned int collumn );
     
+    float* getTexels();
+    
+    void getDimensions( int& width, int& height );
+    
 private:
 
     unsigned int _nRows;
