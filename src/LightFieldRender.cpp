@@ -24,6 +24,27 @@ LightFieldRender::LightFieldRender( LightFieldImage* lightFieldImage ) :
 
 LightFieldRender::~LightFieldRender() 
 {
+    CUDAManager::getInstance()->setDisplayDevice( false );
+
+    if( _outPBO )
+    {
+        CUDAManager::getInstance()->collectError(
+            cudaGraphicsUnregisterResource( _cudaPBOResource ) );
+        glDeleteBuffersARB( 1, &_outPBO );
+        glDeleteTextures( 1, &_outTexture );
+    }
+
+    CUDAManager::getInstance()->setDefaultDevice();
+
+    if( _lightFieldTexels )
+    {
+        delete[] _lightFieldTexels;
+    }
+
+    if( _depthBuffer )
+    {
+        delete[] _depthBuffer;
+    }
 }
 
 
@@ -46,7 +67,7 @@ void LightFieldRender::render()
 
     initPBO();
     
-    updateKernelParameters();
+    updateParameters();
 
     // Recupera a matriz modelView do OpenGL
     GLfloat modelView[ 16 ];
@@ -60,6 +81,7 @@ void LightFieldRender::render()
     float* d_depthBuffer;
 
     initCudaBuffers( d_output, d_depthBuffer );
+    initKernelParameters();
 
     float elapsedTime = renderKernel( gridSize, blockSize, d_output, d_depthBuffer );
 
@@ -199,7 +221,7 @@ void LightFieldRender::initCudaBuffers( uint*& d_output, float*& d_depthBuffer )
     glReadPixels( 0, 0, _screenWidth, _screenWidth, GL_DEPTH_COMPONENT, GL_FLOAT, _depthBuffer );
 
     CUDAManager::getInstance()->collectError(
-        cudaMemcpy( d_depthBuffer, _depthBuffer, _screenWidth * _screenHeight * 4, cudaMemcpyHostToDevice ) );
+        cudaMemcpy( d_depthBuffer, _depthBuffer, _screenWidth * _screenHeight * 4, cudaMemcpyHostToDevice ) );    
 }
 
 
@@ -222,7 +244,7 @@ void LightFieldRender::cleanCudaBuffers( float*& d_depthBuffer )
 }
 
 
-void LightFieldRender::updateKernelParameters()
+void LightFieldRender::updateParameters()
 {
     // Matriz modelview do 
     GLdouble modelView[ 16 ];

@@ -57,7 +57,7 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
 }
 
 
-// VOLUME RENDER
+// LightFieldRender
 float LightFieldRender::renderKernel( dim3 gridSize, dim3 blockSize, uint* d_output, float* d_depthBuffer )
 {
     // Repassando parametros para o kernel...
@@ -66,4 +66,10 @@ float LightFieldRender::renderKernel( dim3 gridSize, dim3 blockSize, uint* d_out
     d_render <<< gridSize, blockSize >>> ( d_output, d_depthBuffer, _screenWidth, _screenHeight, true );
 
     return CUDAManager::getInstance()->stopClock( clock );
+}
+
+void LightFieldRender::initKernelParameters()
+{    
+    CUDAManager::getInstance()->collectError(
+        cudaMemcpyToSymbol( _cudaKernelParameters, ( void* ) &_kernelParameters, sizeof( KernelParameters ) ) );
 }

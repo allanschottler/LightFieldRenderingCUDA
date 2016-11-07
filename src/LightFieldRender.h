@@ -54,10 +54,12 @@ public:
     void initPBO();
     
     void initCudaBuffers( uint*& d_output, float*& d_depthBuffer );
-    
+        
     void cleanCudaBuffers( float*& d_depthBuffer );
     
-    void updateKernelParameters();
+    void initKernelParameters();
+    
+    void updateParameters();
     
     void computeFPS( float elapsedTime, float& fps );
     
