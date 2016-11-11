@@ -14,7 +14,7 @@ public:
     
     typedef std::vector< unsigned char > MicroImage;
     
-    LightFieldImage( unsigned int nRows, unsigned int nCollumns );
+    LightFieldImage( unsigned int nRows, unsigned int nCollumns, unsigned int microImageWidth, unsigned int microImageHeight );
     
     virtual ~LightFieldImage() {};
     
@@ -28,10 +28,15 @@ public:
     
     void getDimensions( int& width, int& height );
     
+    void getMicroImageDimensions( int& width, int& height );
+    
 private:
 
     unsigned int _nRows;
     unsigned int _nCollumns;
+    
+    unsigned int _microImageWidth;
+    unsigned int _microImageHeight;
     
     std::vector< MicroImage > _microImages;
 };

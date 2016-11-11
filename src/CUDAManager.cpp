@@ -59,7 +59,7 @@ CUDAManager::CUDAManager() :
     _currentDeviceIndex( -1 )
 {
     // Inicializando o ponteiro do semaforo...
-    //pthread_mutex_init( &_mutex, NULL );
+    pthread_mutex_init( &_mutex, NULL );
 
     // Verifica se a variavel de ambiente (que indica que
     // que o sistema nao possui GPUs) foi definida...

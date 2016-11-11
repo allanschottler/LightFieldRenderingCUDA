@@ -13,15 +13,22 @@ LightFieldApplication::LightFieldApplication() :
     _window( new MainWindow( "Light Field Rendering" ) )
 {
     osg::ref_ptr< osgGA::TrackballManipulator > manipulator = new osgGA::TrackballManipulator();
-
+    
     _scene = new osg::Group;
     _scene->setDataVariance( osg::Object::DYNAMIC );
     _scene->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF ); 
         
+    int centerX = 9;
+    int centerY = 9;
+    
     _window->getCanvas().setCameraManipulator( manipulator );
+    _window->getCanvas().getCameraManipulator()->setHomePosition( 
+        osg::Vec3d( centerX, centerY, 30 ), 
+        osg::Vec3d( centerX, centerY, 0. ), 
+        osg::Vec3d( 0., 1., 0. ) );    
     _window->getCanvas().getCamera()->setClearColor( osg::Vec4( .0f, .0f, .0f, 1.f ) );
     _window->getCanvas().setSceneData( _scene );
-    _window->show();
+    _window->show(); 
 }
 
 
@@ -49,7 +56,7 @@ bool LightFieldApplication::loadLightField( std::string lightFieldHeader )
         return false;
         
     _lightFieldImage = loader.getLightFieldImage();
-    
+            
     _scene->addChild( createLightFieldNode() );
     
     return true;

@@ -41,6 +41,8 @@ public:
         /* Parametros para a transformação inversa do valor do zbuffer */
         float zTransformParamA;
         float zTransformParamB;
+        
+        int nCameraRows, nCameraCollumns;
     };
     
     LightFieldRender( LightFieldImage* lightFieldImage );
@@ -70,6 +72,9 @@ public:
     float renderKernel( dim3 gridSize, dim3 blockSize, uint* d_output, float* d_depthBuffer );
     
 private:
+    
+    void debugInfo();
+    
 
     LightFieldImage* _lightFieldImage;
     

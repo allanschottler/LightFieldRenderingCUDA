@@ -17,12 +17,23 @@
 cudaGraphicsResource* _cudaPBOResource;
 
 LightFieldRender::LightFieldRender( LightFieldImage* lightFieldImage ) :
-    _lightFieldImage( lightFieldImage )
-{
-    int width, height;
+    _lightFieldImage( lightFieldImage ),
+    _lightFieldTexels( nullptr ),
+    _screenWidth( 100 ),
+    _screenHeight( 100 ),
+    _outBuffer( nullptr ),
+    _depthBuffer( nullptr ),
+    _fps( 99 ) 
+{        
+    int width, height, microWidth, microHeight;
     _lightFieldImage->getDimensions( width, height );
+    _lightFieldImage->getMicroImageDimensions( microWidth, microHeight );
     
-    initLightFieldTexture( _lightFieldImage->getTexels(), width, height );
+    _kernelParameters.nCameraCollumns = width;
+    _kernelParameters.nCameraRows = height;
+    
+    _lightFieldTexels = _lightFieldImage->getTexels();
+    initLightFieldTexture( _lightFieldTexels, microWidth, microHeight );    
     
     CUDAManager::getInstance()->setDefaultDevice();
 }
@@ -59,7 +70,7 @@ void LightFieldRender::render()
     if( !CUDAManager::getInstance()->aquireGPU() )
         return;
     
-    CUDAManager::getInstance()->setDisplayDevice( false );
+    CUDAManager::getInstance()->setDisplayDevice( false ); 
 
     _frameCount++;
     _startTime = time( NULL );
@@ -81,7 +92,10 @@ void LightFieldRender::render()
     initPBO();    
     updateParameters();
     initKernelParameters();
-    initCudaBuffers( d_output, d_depthBuffer );
+    initCudaBuffers( d_output, d_depthBuffer );    
+    
+    // Print camera 
+    //debugInfo();
 
     float elapsedTime = renderKernel( gridSize, blockSize, d_output, d_depthBuffer );
 
@@ -147,7 +161,10 @@ void LightFieldRender::render()
 
 void LightFieldRender::getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax )
 {
-    xMin = xMax = yMin = yMax = zMin = zMax = 0;
+    xMin = yMin = zMin = 0;
+    xMax = _screenWidth;
+    yMax = _screenHeight;
+    zMax = 1;
 }
 
 
@@ -212,9 +229,7 @@ void LightFieldRender::initCudaBuffers( uint*& d_output, float*& d_depthBuffer )
         cudaMalloc( ( void** ) &d_depthBuffer, _screenWidth * _screenHeight * sizeof( float ) ) );
        
     if( _depthBuffer )
-    {
         delete[] _depthBuffer;
-    }
     
     _depthBuffer = new float[ _screenWidth * _screenHeight ];
     
@@ -229,12 +244,6 @@ void LightFieldRender::cleanCudaBuffers( float*& d_depthBuffer )
 {     
     CUDAManager::getInstance()->collectError(
         cudaMemcpy( _depthBuffer, d_depthBuffer, _screenWidth * _screenHeight * 4, cudaMemcpyDeviceToHost ) );
-
-    // Depth retornado pelo kernel
-//    if( _isDebugOn )
-//    {
-//        debugInfo( _depthBuffer );
-//    }
 
     CUDAManager::getInstance()->collectError(
         cudaGraphicsUnmapResources( 1, &_cudaPBOResource, 0 ) );
@@ -334,4 +343,45 @@ void LightFieldRender::computeFPS( float elapsedTime, float& fps )
     _endTime = time( NULL );
     fps = ( double ) 1 / ( elapsedTime / 1000.0f );
     _frameCount = 0;
+}
+
+
+void LightFieldRender::debugInfo()
+{
+    /*float max = -FLT_MAX;
+    float min = FLT_MAX;
+
+    for( int i = 0; i < _screenWidth * _screenHeight; i++ )
+    {
+        if( max < buffer[ i ] )
+        {
+            max = buffer[ i ];
+        }
+
+        if( min > buffer[ i ] )
+        {
+            min = buffer[ i ];
+        }
+    }
+
+    printf( "Max: %f, Min: %f\n", max, min );*/
+
+    printf( "nearOrigin: ( %f, %f, %f )\n", _kernelParameters.nearOrigin.x, _kernelParameters.nearOrigin.y,
+            _kernelParameters.nearOrigin.z );
+    printf( "farOrigin: ( %f, %f, %f )\n", _kernelParameters.farOrigin.x, _kernelParameters.farOrigin.y,
+            _kernelParameters.farOrigin.z );
+
+    printf( "uNear: ( %f, %f, %f )\n", _kernelParameters.uNear.x, _kernelParameters.uNear.y,
+            _kernelParameters.uNear.z );
+    printf( "vNear: ( %f, %f, %f )\n", _kernelParameters.vNear.x, _kernelParameters.vNear.y,
+            _kernelParameters.vNear.z );
+    printf( "uFar: ( %f, %f, %f )\n", _kernelParameters.uFar.x, _kernelParameters.uFar.y, _kernelParameters.uFar.z );
+    printf( "vFar: ( %f, %f, %f )\n", _kernelParameters.vFar.x, _kernelParameters.vFar.y, _kernelParameters.vFar.z );
+
+    /*printf( "startZ: %f\n", _kernelParameters.startZ );
+    printf( "endZ: %f\n", _kernelParameters.endZ );
+    printf( "zIncrement: %f\n", _kernelParameters.zIncrement );*/
+
+    printf( "near: %f\n", _kernelParameters.near );
+    printf( "far: %f\n", _kernelParameters.far );
 }
