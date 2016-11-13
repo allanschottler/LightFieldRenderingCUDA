@@ -7,10 +7,11 @@
 #define	LIGHTFIELDIMAGELOADER_H
 
 #include "LightFieldImage.h"
+#include "ThreadListener.h"
 
 #include <string>
 
-class LightFieldImageLoader 
+class LightFieldImageLoader : public ThreadListener
 {
 public:
     
@@ -18,21 +19,25 @@ public:
     
     virtual ~LightFieldImageLoader() {};
     
-    bool load( std::string headerPath );
-    
+    bool load( std::string headerPath );    
+
+    void receiveThreadState( Thread* thread, const ThreadState& state );
+
     LightFieldImage* getLightFieldImage() { return _lightFieldImage; };
     
 private:
     
     bool readHeader();
     
-    LightFieldImage::MicroImage readMicroImage( std::string imagePath );
+    //LightFieldImage::MicroImage readMicroImage( std::string imagePath );
     
     std::string _folderPath;
     
     std::string _headerPath;
     
     LightFieldImage* _lightFieldImage;
+    
+    int _nFilesToLoad, _nFinishedThreads;
 
 };
 

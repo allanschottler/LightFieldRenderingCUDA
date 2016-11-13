@@ -49,22 +49,18 @@ LightFieldApplication* LightFieldApplication::getInstance()
 
 
 bool LightFieldApplication::loadLightField( std::string lightFieldHeader )
-{
-    LightFieldImageLoader loader;
-    
-    if( !loader.load( lightFieldHeader ) )
-        return false;
-        
-    _lightFieldImage = loader.getLightFieldImage();
-            
-    _scene->addChild( createLightFieldNode() );
+{    
+    if( !_lightFieldLoader.load( lightFieldHeader ) )
+        return false;        
     
     return true;
 }
 
 
-osg::ref_ptr< osg::Group > LightFieldApplication::createLightFieldNode()
-{
+void LightFieldApplication::createLightFieldNode()
+{    
+    _lightFieldImage = _lightFieldLoader.getLightFieldImage();            
+    
     LightFieldRender* lightFieldRender = new LightFieldRender( _lightFieldImage );    
     osg::ref_ptr< osg::Drawable > lightFieldDrawable = new LightFieldDrawable( lightFieldRender );
         
@@ -72,7 +68,7 @@ osg::ref_ptr< osg::Group > LightFieldApplication::createLightFieldNode()
     lightfieldGeode->addDrawable( lightFieldDrawable );
     
     osg::ref_ptr< osg::Group > lightfieldGroup = new osg::Group;
-    lightfieldGroup->addChild( lightfieldGeode );
+    lightfieldGroup->addChild( lightfieldGeode );    
     
-    return lightfieldGroup;
+    _scene->addChild( lightfieldGroup );
 }

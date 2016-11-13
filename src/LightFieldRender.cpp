@@ -99,7 +99,7 @@ void LightFieldRender::render()
 
     float elapsedTime = renderKernel( gridSize, blockSize, d_output, d_depthBuffer );
 
-    CUDAManager::getInstance()->getLastError( "VolumeRender::render(): render_kernel failed" );
+    CUDAManager::getInstance()->getLastError( "render_kernel failed" );
 
     cleanCudaBuffers( d_depthBuffer );
 
