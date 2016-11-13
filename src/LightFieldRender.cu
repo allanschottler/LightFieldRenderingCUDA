@@ -94,7 +94,7 @@ void trace( Quad& quad, float3& hitPoint, float4& collectedColor )
     // Lê a textura
     collectedColor = tex2D( _lightfieldTexture, 
                           map( hitPoint.x, quad.blPoint.x, quad.trPoint.x, 0, 1 ),
-                          map( hitPoint.y, quad.blPoint.y, quad.trPoint.y, 0, 1 ) );
+                          map( hitPoint.y, quad.trPoint.y, quad.blPoint.y, 0, 1 ) );
 }
 
 __global__
@@ -172,7 +172,7 @@ void LightFieldRender::initLightFieldTexture( unsigned char* texels, int width, 
         width * sizeof( uchar4 ), height, cudaMemcpyHostToDevice ) );
         
     // Inicializa os parametros de textura
-    _lightfieldTexture.normalized = false;                       
+    _lightfieldTexture.normalized = true;                       
     _lightfieldTexture.filterMode = cudaFilterModeLinear;       
     _lightfieldTexture.addressMode[ 0 ] = cudaAddressModeClamp; 
     _lightfieldTexture.addressMode[ 1 ] = cudaAddressModeClamp; 

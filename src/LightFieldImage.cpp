@@ -6,6 +6,7 @@
  */
 
 #include <vector>
+#include <iostream>
 
 #include "LightFieldImage.h"
 
@@ -41,15 +42,15 @@ unsigned char* LightFieldImage::getTexels()
 {
     //unsigned char* texels = new unsigned char[ _nRows * _nCollumns * _microImageWidth * _microImageHeight * 4 ];//[ _microImageWidth * _microImageHeight * 4 ]; //
     unsigned char* texels = new unsigned char[ _microImageWidth * _microImageHeight * 4 ]; //
-    LightFieldImage::MicroImage microImage = getMicroImage( 0 );
+    LightFieldImage::MicroImage microImage = getMicroImage( 1 );
     
     for( size_t i = 0; i < _microImageWidth * _microImageHeight * 4; i += 4 )
     {        
         //size_t microImageIndex = i / _microImageWidth
-        texels[ i ]     = microImage[ i ] * 255;
-        texels[ i + 1 ] = microImage[ i + 1 ] * 255;
-        texels[ i + 2 ] = microImage[ i + 2 ] * 255;
-        texels[ i + 3 ] = microImage[ i + 3 ] * 255;
+        texels[ i ]     = microImage[ i ];
+        texels[ i + 1 ] = microImage[ i + 1 ];
+        texels[ i + 2 ] = microImage[ i + 2 ];
+        texels[ i + 3 ] = microImage[ i + 3 ];
     }
     
     /*for( size_t i = 0; i < _nRows * _nCollumns * _microImageWidth * _microImageHeight * 4; i += 4 )
