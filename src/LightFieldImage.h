@@ -14,29 +14,29 @@ public:
     
     typedef std::vector< unsigned char > MicroImage;
     
-    LightFieldImage( unsigned int nRows, unsigned int nCollumns, unsigned int microImageWidth, unsigned int microImageHeight );
+    LightFieldImage( size_t nRows, size_t nCollumns, size_t microImageWidth, size_t microImageHeight );
     
     virtual ~LightFieldImage() {};
     
-    void setMicroImage( unsigned int index1d, MicroImage microImage );
+    void setMicroImage( size_t index1d, MicroImage microImage );
     
-    MicroImage getMicroImage( unsigned int index1d );
+    MicroImage getMicroImage( size_t index1d );
     
-    unsigned int getIndex1d( unsigned int row, unsigned int collumn );
+    size_t getIndex1d( size_t row, size_t collumn );
     
-    float* getTexels();
+    unsigned char* getTexels();
+        
+    void getTextureDimensions( int& width, int& height );
     
     void getDimensions( int& width, int& height );
     
-    void getMicroImageDimensions( int& width, int& height );
-    
 private:
 
-    unsigned int _nRows;
-    unsigned int _nCollumns;
+    size_t _nRows;
+    size_t _nCollumns;
     
-    unsigned int _microImageWidth;
-    unsigned int _microImageHeight;
+    size_t _microImageWidth;
+    size_t _microImageHeight;
     
     std::vector< MicroImage > _microImages;
 };

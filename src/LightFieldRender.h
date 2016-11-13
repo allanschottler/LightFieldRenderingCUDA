@@ -53,7 +53,7 @@ public:
     
     void getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax );
     
-    void initLightFieldTexture( float* texels, int width, int height );
+    void initLightFieldTexture( unsigned char* texels, int width, int height );
     
     void initPBO();
     
@@ -79,7 +79,7 @@ private:
     LightFieldImage* _lightFieldImage;
     
     /* Buffer intermediário para passagem de dados para a placa */
-    float* _lightFieldTexels;
+    unsigned char* _lightFieldTexels;
     
     /* Array com os valores do volume (recebe textura 3D) */
     cudaArray* _lightFieldArray;
@@ -98,7 +98,7 @@ private:
     unsigned int _outTexture;
 
     /* Buffer de saída do kernel */
-    float* _outBuffer;
+    //float* _outBuffer;
     
     /* Buffer de profundidade do OpenGL */
     float* _depthBuffer;    

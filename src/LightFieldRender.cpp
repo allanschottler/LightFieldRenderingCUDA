@@ -21,19 +21,20 @@ LightFieldRender::LightFieldRender( LightFieldImage* lightFieldImage ) :
     _lightFieldTexels( nullptr ),
     _screenWidth( 100 ),
     _screenHeight( 100 ),
-    _outBuffer( nullptr ),
+    _outPBO( 0 ),
+    _outTexture( 0 ),
     _depthBuffer( nullptr ),
     _fps( 99 ) 
 {        
-    int width, height, microWidth, microHeight;
-    _lightFieldImage->getDimensions( width, height );
-    _lightFieldImage->getMicroImageDimensions( microWidth, microHeight );
+    int width, height, nRows, nCollumns;
+    _lightFieldImage->getDimensions( nCollumns, nRows );
+    _lightFieldImage->getTextureDimensions( width, height );
     
-    _kernelParameters.nCameraCollumns = width;
-    _kernelParameters.nCameraRows = height;
+    _kernelParameters.nCameraCollumns = nCollumns;
+    _kernelParameters.nCameraRows = nRows;
     
     _lightFieldTexels = _lightFieldImage->getTexels();
-    initLightFieldTexture( _lightFieldTexels, microWidth, microHeight );    
+    initLightFieldTexture( _lightFieldTexels, 1024, 1024 );//width, height );    
     
     CUDAManager::getInstance()->setDefaultDevice();
 }
@@ -94,7 +95,7 @@ void LightFieldRender::render()
     //debugInfo();
 
     float elapsedTime = renderKernel( gridSize, blockSize, d_output, d_depthBuffer );
-
+    
     CUDAManager::getInstance()->getLastError( "render_kernel failed" );
 
     cleanCudaBuffers( d_depthBuffer );
@@ -158,9 +159,15 @@ void LightFieldRender::render()
 void LightFieldRender::getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax )
 {
     xMin = yMin = zMin = 0;
-    xMax = _screenWidth;
-    yMax = _screenHeight;
     zMax = 1;
+//    xMax = _screenWidth;
+//    yMax = _screenHeight;
+    
+    int xMaxi, yMaxi;
+    _lightFieldImage->getDimensions( xMaxi, yMaxi );    
+    
+    xMax = (float)xMaxi;
+    yMax = (float)yMaxi;
 }
 
 
@@ -169,6 +176,7 @@ void LightFieldRender::initPBO()
     if( _outPBO )
     {
         // unregister this buffer object from CUDA C
+        //std::cout << "PBO UNREG\n";
         CUDAManager::getInstance()->collectError(
             cudaGraphicsUnregisterResource( _cudaPBOResource ) );
 
@@ -185,6 +193,7 @@ void LightFieldRender::initPBO()
     glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
 	
     // Registra o buffer object
+    //std::cout << "PBO\n";
     CUDAManager::getInstance()->collectError(
         cudaGraphicsGLRegisterBuffer( &_cudaPBOResource, _outPBO, cudaGraphicsMapFlagsWriteDiscard ) );
 
@@ -209,18 +218,22 @@ void LightFieldRender::initPBO()
 void LightFieldRender::initCudaBuffers( uint*& d_output, float*& d_depthBuffer )
 {    
     // Mapeia o PBO para o CUDA
+    //std::cout << "PBO MAP\n";
     CUDAManager::getInstance()->collectError(
         cudaGraphicsMapResources( 1, &_cudaPBOResource, 0 ) );
 
+    //std::cout << "PBO MAP POINTER\n";
     size_t num_bytes;
     CUDAManager::getInstance()->collectError(
         cudaGraphicsResourceGetMappedPointer( ( void** )&d_output, &num_bytes,
                                               _cudaPBOResource ) );
 
+    //std::cout << "OUTPUT INIT\n";
     CUDAManager::getInstance()->collectError(
         cudaMemset( d_output, 0, _screenWidth * _screenHeight * 4 ) );
 
     // Aloca o buffer de profundidade na placa
+    //std::cout << "DEPTH INIT\n";
     CUDAManager::getInstance()->collectError(
         cudaMalloc( ( void** ) &d_depthBuffer, _screenWidth * _screenHeight * sizeof( float ) ) );
        
@@ -231,6 +244,7 @@ void LightFieldRender::initCudaBuffers( uint*& d_output, float*& d_depthBuffer )
     
     glReadPixels( 0, 0, _screenWidth, _screenWidth, GL_DEPTH_COMPONENT, GL_FLOAT, _depthBuffer );
 
+    //std::cout << "DEPTH CPY\n";
     CUDAManager::getInstance()->collectError(
         cudaMemcpy( d_depthBuffer, _depthBuffer, _screenWidth * _screenHeight, cudaMemcpyHostToDevice ) );    
 }
@@ -238,12 +252,15 @@ void LightFieldRender::initCudaBuffers( uint*& d_output, float*& d_depthBuffer )
 
 void LightFieldRender::cleanCudaBuffers( float*& d_depthBuffer )
 {     
+    //std::cout << "DEPTH CLEAN CPY\n";
     CUDAManager::getInstance()->collectError(
         cudaMemcpy( _depthBuffer, d_depthBuffer, _screenWidth * _screenHeight, cudaMemcpyDeviceToHost ) );
 
+    //std::cout << "PBO CLEAN\n";
     CUDAManager::getInstance()->collectError(
         cudaGraphicsUnmapResources( 1, &_cudaPBOResource, 0 ) );
 
+    //std::cout << "DEPTH CLEAN\n";
     CUDAManager::getInstance()->collectError(
         cudaFree( d_depthBuffer ) );
 }

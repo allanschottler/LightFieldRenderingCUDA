@@ -162,5 +162,4 @@ void PNGLoaderThread::executeStep()
 
 void PNGLoaderThread::cancelCleanUp()
 {
-    // TODO
 }

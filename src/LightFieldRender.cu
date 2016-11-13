@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdio.h>
 
 #include "LightFieldRender.h"
 #include "helper_math.h"
@@ -12,7 +13,7 @@
 
 __constant__ LightFieldRender::KernelParameters _cudaKernelParameters;
 
-texture< float4, 2 > _lightfieldTexture;
+texture< uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat > _lightfieldTexture;
 
 struct Ray
 {
@@ -57,11 +58,15 @@ unsigned int rgbaFloatToInt( float4 rgba )
     rgba.y = __saturatef( rgba.y );
     rgba.z = __saturatef( rgba.z );
     rgba.w = __saturatef( rgba.w );
+    /*rgba.x /= 255;
+    rgba.y /= 255;
+    rgba.z /= 255;
+    rgba.w /= 255;*/
 
     typedef unsigned int uint;
 
     return ( uint( rgba.w * 255 ) << 24 ) | ( uint( rgba.z * 255 ) << 16 ) |
-           ( uint( rgba.y * 255 ) << 8 ) | uint( rgba.x * 255 );
+           ( uint( rgba.y * 255 ) << 8 ) | uint( rgba.x * 255 );  
 }
 
 __device__
@@ -112,14 +117,10 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     setNearAndFar( u, v, nearX, farX, nearY, farY, nearZ, farZ );
 
     //Cria o quad
-    float3 blPoint( make_float3( 0, 0, 0 ) );
-    float3 tlPoint( make_float3( 0, _cudaKernelParameters.nCameraRows, 0 ) );
-    float3 trPoint( make_float3( _cudaKernelParameters.nCameraCollumns, _cudaKernelParameters.nCameraRows, 0 ) );
-
     Quad quad;
-    quad.blPoint = blPoint;
-    quad.tlPoint = tlPoint;
-    quad.trPoint = trPoint;
+    quad.blPoint = make_float3( 0, 0, 0 );
+    quad.tlPoint = make_float3( 0, _cudaKernelParameters.nCameraRows, 0 );
+    quad.trPoint = make_float3( _cudaKernelParameters.nCameraCollumns, _cudaKernelParameters.nCameraRows, 0 );
     
     Ray eyeRay;
     eyeRay.origin = make_float3( nearX, nearY, nearZ );
@@ -128,13 +129,13 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     // Acha a interseção com a bounding box
     float3 hitPoint;
     bool hit = intersectQuad( eyeRay, quad, &hitPoint );
-
+    
     // Para se o raio não interceptou a bounding box.
     if( !hit )
         return;
 
     // Valor de cor acumulada durante o traçado de raios.
-    float4 collectedColor = make_float4( 0.0f, 0.0f, 0.0f, 0.0f );
+    float4 collectedColor = make_float4( 0, 0, 0, 0 );
 
     // Traça o raio    
     trace( quad, hitPoint, collectedColor );
@@ -157,23 +158,26 @@ float LightFieldRender::renderKernel( dim3 gridSize, dim3 blockSize, uint* d_out
 }
 
 
-void LightFieldRender::initLightFieldTexture( float* texels, int width, int height )
+void LightFieldRender::initLightFieldTexture( unsigned char* texels, int width, int height )
 {
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc< float4 >();
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc< uchar4 >();
 
+    std::cout << "MALLOC\n";
     CUDAManager::getInstance()->collectError( 
         cudaMallocArray( &_lightFieldArray, &channelDesc, width, height ) );    
     
+    std::cout << "MEMCPY\n";
     CUDAManager::getInstance()->collectError( 
-        cudaMemcpy2DToArray( _lightFieldArray, 0, 0, texels, width * sizeof( float4 ), 
-        width * sizeof( float4 ), height, cudaMemcpyHostToDevice ) );
+        cudaMemcpy2DToArray( _lightFieldArray, 0, 0, texels, width * sizeof( uchar4 ), 
+        width * sizeof( uchar4 ), height, cudaMemcpyHostToDevice ) );
         
     // Inicializa os parametros de textura
-    _lightfieldTexture.normalized = true;                       
+    _lightfieldTexture.normalized = false;                       
     _lightfieldTexture.filterMode = cudaFilterModeLinear;       
     _lightfieldTexture.addressMode[ 0 ] = cudaAddressModeClamp; 
     _lightfieldTexture.addressMode[ 1 ] = cudaAddressModeClamp; 
 
+    std::cout << "BIND\n";
     // Associa o array a textura
     CUDAManager::getInstance()->collectError( 
         cudaBindTextureToArray( _lightfieldTexture, _lightFieldArray, channelDesc ) );
@@ -182,6 +186,7 @@ void LightFieldRender::initLightFieldTexture( float* texels, int width, int heig
 
 void LightFieldRender::initKernelParameters()
 {    
+    //std::cout << "PARAMS\n";
     CUDAManager::getInstance()->collectError(
         cudaMemcpyToSymbol( _cudaKernelParameters, ( void* ) &_kernelParameters, sizeof( KernelParameters ) ) );
 }

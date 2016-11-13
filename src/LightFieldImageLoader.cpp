@@ -85,7 +85,7 @@ bool LightFieldImageLoader::load( std::string headerPath )
     
 bool LightFieldImageLoader::readHeader()
 {
-    unsigned int nRows, nCollumns;
+    size_t nRows, nCollumns, imagesWidth, imagesHeight;
     
     std::string line;
     std::ifstream myfile( _folderPath + _headerPath );
@@ -109,13 +109,15 @@ bool LightFieldImageLoader::readHeader()
     while( ss >> buf )
         tokens.push_back( buf );
     
-    if( tokens.size() != 2 )
+    if( tokens.size() != 4 )
         return false;
     
-    nRows = std::stoi( tokens[ 0 ], nullptr );
-    nCollumns = std::stoi( tokens[ 1 ], nullptr );
+    nCollumns    = std::stoi( tokens[ 0 ], nullptr );
+    nRows        = std::stoi( tokens[ 1 ], nullptr );
+    imagesWidth  = std::stoi( tokens[ 2 ], nullptr );
+    imagesHeight = std::stoi( tokens[ 3 ], nullptr );
     
-    _lightFieldImage = new LightFieldImage( nRows, nCollumns, 1024, 1024 );  // HARDCOOOOODE
+    _lightFieldImage = new LightFieldImage( nRows, nCollumns, imagesWidth, imagesHeight );
     
     return true;
 }

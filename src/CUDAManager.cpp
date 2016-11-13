@@ -375,8 +375,14 @@ bool CUDAManager::isSupported( int deviceIndex )
     }
 
     // Registra propriedades do dispositivo analisado...
-    std::string msg = "Device: %s | GPU_Index: %d | Memory: %zu MB | SharedMemory Per Block: %d KB | Device Version: %d.%d | %s.";
     std::string device_type = ( deviceProp.integrated )?( "On-Board_Device" ):( "Off-Board_Device" );
+    std::string msg = 
+            "Device: " + std::string(deviceProp.name) + 
+            " | GPU_Index: " + std::to_string(deviceIndex) + 
+            " | Memory: " + std::to_string(deviceProp.totalGlobalMem / ( 1024 * 1024 )) + " MB" +
+            " | SharedMemory Per Block: " + std::to_string(deviceProp.sharedMemPerBlock / 1024) + " KB" +
+            " | Device Version: " + std::to_string(deviceProp.major) + "." + std::to_string(deviceProp.minor) + 
+            " | " + device_type + ".";
 	std::cout << msg << std::endl;
     /*_execution.logMessageF( msg.c_str(), deviceProp.name,
                             deviceIndex, deviceProp.totalGlobalMem / ( 1024 * 1024 ),
