@@ -54,14 +54,10 @@ LightFieldRender::~LightFieldRender()
     CUDAManager::getInstance()->setDefaultDevice();
 
     if( _lightFieldTexels )
-    {
         delete[] _lightFieldTexels;
-    }
-
+        
     if( _depthBuffer )
-    {
         delete[] _depthBuffer;
-    }
 }
 
 
@@ -236,14 +232,14 @@ void LightFieldRender::initCudaBuffers( uint*& d_output, float*& d_depthBuffer )
     glReadPixels( 0, 0, _screenWidth, _screenWidth, GL_DEPTH_COMPONENT, GL_FLOAT, _depthBuffer );
 
     CUDAManager::getInstance()->collectError(
-        cudaMemcpy( d_depthBuffer, _depthBuffer, _screenWidth * _screenHeight * 4, cudaMemcpyHostToDevice ) );    
+        cudaMemcpy( d_depthBuffer, _depthBuffer, _screenWidth * _screenHeight, cudaMemcpyHostToDevice ) );    
 }
 
 
 void LightFieldRender::cleanCudaBuffers( float*& d_depthBuffer )
 {     
     CUDAManager::getInstance()->collectError(
-        cudaMemcpy( _depthBuffer, d_depthBuffer, _screenWidth * _screenHeight * 4, cudaMemcpyDeviceToHost ) );
+        cudaMemcpy( _depthBuffer, d_depthBuffer, _screenWidth * _screenHeight, cudaMemcpyDeviceToHost ) );
 
     CUDAManager::getInstance()->collectError(
         cudaGraphicsUnmapResources( 1, &_cudaPBOResource, 0 ) );

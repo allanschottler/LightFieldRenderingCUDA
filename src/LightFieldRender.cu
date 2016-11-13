@@ -100,9 +100,7 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     uint y = blockIdx.y * blockDim.y + threadIdx.y;
 
     if( ( x >= canvasWidth ) || ( y >= canvasHeight ) )
-    {
         return;
-    }
 
     //Mapeia x e y para o intervalo [-1, 1]
     float u = ( x / ( float ) canvasWidth ) * 2.0f - 1.0f;
