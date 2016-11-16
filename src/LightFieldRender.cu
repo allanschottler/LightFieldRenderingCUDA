@@ -28,7 +28,7 @@ struct Quad
     float3 blPoint; // bottom left s3
 };
 
-// AUX
+// Auxiliares
 __device__
 bool intersectQuad( Ray ray, Quad quad, float3* intersectedPoint )
 {
@@ -58,10 +58,6 @@ unsigned int rgbaFloatToInt( float4 rgba )
     rgba.y = __saturatef( rgba.y );
     rgba.z = __saturatef( rgba.z );
     rgba.w = __saturatef( rgba.w );
-    /*rgba.x /= 255;
-    rgba.y /= 255;
-    rgba.z /= 255;
-    rgba.w /= 255;*/
 
     typedef unsigned int uint;
 
@@ -94,7 +90,7 @@ void trace( Quad& quad, float3& hitPoint, float4& collectedColor )
     // Lê a textura
     collectedColor = tex2D( _lightfieldTexture, 
                           map( hitPoint.x, quad.blPoint.x, quad.trPoint.x, 0, 1 ),
-                          map( hitPoint.y, quad.trPoint.y, quad.blPoint.y, 0, 1 ) );
+                          map( hitPoint.y, quad.blPoint.y, quad.trPoint.y, 0, 1 ) );
 }
 
 __global__
@@ -115,16 +111,18 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     float nearY, farY;
     float nearZ, farZ;
     setNearAndFar( u, v, nearX, farX, nearY, farY, nearZ, farZ );
-
+    
+    float3 farPoint = make_float3( farX, farY, farZ );
+            
     //Cria o quad
     Quad quad;
-    quad.blPoint = make_float3( 0, 0, 0 );
-    quad.tlPoint = make_float3( 0, _cudaKernelParameters.nCameraRows, 0 );
-    quad.trPoint = make_float3( _cudaKernelParameters.nCameraCollumns, _cudaKernelParameters.nCameraRows, 0 );
+    quad.tlPoint = make_float3( 0, 0, 0 );
+    quad.blPoint = make_float3( 0, _cudaKernelParameters.nCameraRows, 0 );
+    quad.trPoint = make_float3( _cudaKernelParameters.nCameraCollumns, 0, 0 );
     
     Ray eyeRay;
     eyeRay.origin = make_float3( nearX, nearY, nearZ );
-    eyeRay.direction = make_float3( farX - nearX, farY - nearY, farZ - nearZ );
+    eyeRay.direction = farPoint - eyeRay.origin;// make_float3( farX - nearX, farY - nearY, farZ - nearZ );
 
     // Acha a interseção com a bounding box
     float3 hitPoint;
@@ -134,14 +132,12 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     if( !hit )
         return;
 
-    // Valor de cor acumulada durante o traçado de raios.
-    float4 collectedColor = make_float4( 0, 0, 0, 0 );
-
     // Traça o raio    
+    float4 collectedColor = make_float4( 0, 0, 0, 0 );
     trace( quad, hitPoint, collectedColor );
 
     // Grava saidas
-    d_depthBuffer[ y * canvasWidth + x ] = 0; // TODO
+    d_depthBuffer[ y * canvasWidth + x ] = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin ); // TODO
     d_output[ y * canvasWidth + x ] = rgbaFloatToInt( collectedColor );
 }
 
@@ -162,11 +158,11 @@ void LightFieldRender::initLightFieldTexture( unsigned char* texels, int width, 
 {
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc< uchar4 >();
 
-    std::cout << "MALLOC\n";
+    //std::cout << "MALLOC\n";
     CUDAManager::getInstance()->collectError( 
         cudaMallocArray( &_lightFieldArray, &channelDesc, width, height ) );    
     
-    std::cout << "MEMCPY\n";
+    //std::cout << "MEMCPY\n";
     CUDAManager::getInstance()->collectError( 
         cudaMemcpy2DToArray( _lightFieldArray, 0, 0, texels, width * sizeof( uchar4 ), 
         width * sizeof( uchar4 ), height, cudaMemcpyHostToDevice ) );
@@ -177,7 +173,7 @@ void LightFieldRender::initLightFieldTexture( unsigned char* texels, int width, 
     _lightfieldTexture.addressMode[ 0 ] = cudaAddressModeClamp; 
     _lightfieldTexture.addressMode[ 1 ] = cudaAddressModeClamp; 
 
-    std::cout << "BIND\n";
+    //std::cout << "BIND\n";
     // Associa o array a textura
     CUDAManager::getInstance()->collectError( 
         cudaBindTextureToArray( _lightfieldTexture, _lightFieldArray, channelDesc ) );

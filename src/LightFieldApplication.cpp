@@ -18,13 +18,13 @@ LightFieldApplication::LightFieldApplication() :
     _scene->setDataVariance( osg::Object::DYNAMIC );
     _scene->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF ); 
         
-    int centerX = 9;
-    int centerY = 9;
+    float x = 17;
+    float y = 17;
     
     _window->getCanvas().setCameraManipulator( manipulator );
     _window->getCanvas().getCameraManipulator()->setHomePosition( 
-        osg::Vec3d( centerX, centerY, 30 ), 
-        osg::Vec3d( centerX, centerY, 0. ), 
+        osg::Vec3d( x/2, y/2, 2*x ), 
+        osg::Vec3d( x/2, y/2, 0. ), 
         osg::Vec3d( 0., 1., 0. ) );    
     _window->getCanvas().getCamera()->setClearColor( osg::Vec4( .0f, .0f, .0f, 1.f ) );
     _window->getCanvas().setSceneData( _scene );

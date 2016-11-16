@@ -34,7 +34,7 @@ LightFieldRender::LightFieldRender( LightFieldImage* lightFieldImage ) :
     _kernelParameters.nCameraRows = nRows;
     
     _lightFieldTexels = _lightFieldImage->getTexels();
-    initLightFieldTexture( _lightFieldTexels, 1024, 1024 );//width, height );    
+    initLightFieldTexture( _lightFieldTexels, width, height );   
     
     CUDAManager::getInstance()->setDefaultDevice();
 }
