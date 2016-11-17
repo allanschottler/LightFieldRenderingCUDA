@@ -28,27 +28,62 @@ struct Quad
     float3 blPoint; // bottom left s3
 };
 
+struct Plane
+{
+    float3 normal;
+    float3 point;
+};
+
 // Auxiliares
+__device__
+bool intersectPlane( Ray ray, Plane plane, float3* intersectedPoint )
+{    
+    // Testa se acerta plano
+    float ndotdR = dot( plane.normal, ray.direction );
+
+    if( fabs( ndotdR ) < 1e-6f ) // tolerance
+        return false;
+    
+    // Calcula ponto de interseção
+    float t = dot( -plane.normal, ( ray.origin - plane.point ) ) / ndotdR;
+    *intersectedPoint = ray.origin + ray.direction * t;
+    
+    return t >= 0;
+}
+
 __device__
 bool intersectQuad( Ray ray, Quad quad, float3* intersectedPoint )
 {
+    // Define normal
     float3 dS21 = quad.trPoint - quad.tlPoint;
     float3 dS31 = quad.blPoint - quad.tlPoint;
     float3 n = cross( dS21, dS31 );
+    
+    Plane plane;
+    plane.normal = n;
+    plane.point = quad.tlPoint;
 
-    float ndotdR = dot( n, ray.direction );
+    // Testa se acerta plano do quad
+    /*float ndotdR = dot( n, ray.direction );
 
     if( fabs( ndotdR ) < 1e-6f ) // tolerance
         return false;
 
-    float t = dot( -n, (ray.origin - quad.tlPoint) ) / ndotdR;
-    *intersectedPoint = ray.origin + ray.direction * t;
+    // Calcula ponto de interseção
+    float t = dot( -n, ( ray.origin - quad.tlPoint ) ) / ndotdR;
+    *intersectedPoint = ray.origin + ray.direction * t;*/
 
-    float3 dMS1 = *intersectedPoint - quad.tlPoint; 
-    float u = dot( dMS1, dS21 );
-    float v = dot( dMS1, dS31 );
+    if( intersectPlane( ray, plane, intersectedPoint ) )
+    {
+        // Verifica se interseção está contido no quad
+        float3 dMS1 = *intersectedPoint - quad.tlPoint; 
+        float u = dot( dMS1, dS21 );
+        float v = dot( dMS1, dS31 );
 
-    return ( u >= 0.0f && u <= dot( dS21, dS21 ) && v >= 0.0f && v <= dot( dS31, dS31 ) );
+        return ( u >= 0.0f && u <= dot( dS21, dS21 ) && v >= 0.0f && v <= dot( dS31, dS31 ) );
+    }
+    
+    return false;
 }
 
 __device__
@@ -85,12 +120,105 @@ void setNearAndFar( float u, float v, float& nearX, float& farX, float& nearY, f
 }
 
 __device__
-void trace( Quad& quad, float3& hitPoint, float4& collectedColor )
+void getNeighbourCameras( float3 hitPoint, float3& c0, float3& c1, float3& c2, float3& c3 )
 {    
-    // Lê a textura
-    collectedColor = tex2D( _lightfieldTexture, 
-                          map( hitPoint.x, quad.blPoint.x, quad.trPoint.x, 0, 1 ),
-                          map( hitPoint.y, quad.blPoint.y, quad.trPoint.y, 0, 1 ) );
+    c0.x = floor( hitPoint.x );/// sStep );
+    c0.y = floor( hitPoint.y );/// tStep );
+        
+    c1.x = c0.x + 1;
+    c1.y = c0.y;
+        
+    c2.x = c0.x;
+    c2.y = c0.y + 1;
+        
+    c3.x = c0.x + 1;
+    c3.y = c0.y + 1;
+}
+
+__device__
+void mapWorldToTexCoord( Plane& focalPlane, float3 fg, float3 st, float2& uv )
+{    
+    float sStep = 1. / (_cudaKernelParameters.nCameraCollumns);
+    float tStep = 1. / (_cudaKernelParameters.nCameraRows);  
+    
+    float3 stProj = make_float3( st.x, st.y, focalPlane.point.z );
+    float3 stProjToFg = fg - stProj;
+    float distanceToFocalPlane = length( stProj - st );
+    float3 factor = stProjToFg / distanceToFocalPlane;
+    
+    uv.x = ( st.x + .5 + factor.x ) * sStep;
+    uv.y = ( st.y + .5 + factor.y ) * tStep;    
+}
+
+__device__
+void trace( Ray& ray, Quad& quad, Plane& focalPlane, float3& hitPoint, float4& collectedColor )
+{    
+    float3 hitPointPlane;
+    bool hit = intersectPlane( ray, focalPlane, &hitPointPlane );
+    
+    if( !hit ) 
+        return; // Nunca deve cair aqui
+        
+//    float2 texCoord = make_float2(
+//        map( hitPoint.x, quad.blPoint.x, quad.trPoint.x, 0, 1 ),
+//        map( hitPoint.y, quad.blPoint.y, quad.trPoint.y, 0, 1 ) );
+    
+    float3 c0 = make_float3( 0., 0., 0. );
+    float3 c1 = make_float3( 0., 0., 0. );
+    float3 c2 = make_float3( 0., 0., 0. );
+    float3 c3 = make_float3( 0., 0., 0. );
+    
+    getNeighbourCameras( hitPoint, c0, c1, c2, c3 );
+    
+    float2 uv0, uv1, uv2, uv3;
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c0, uv0 );
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c1, uv1 );
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c2, uv2 );
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c3, uv3 );
+    
+    float4 color0, color1, color2, color3;
+    color0 = tex2D( _lightfieldTexture, uv0.x, uv0.y );
+    color1 = tex2D( _lightfieldTexture, uv1.x, uv1.y );
+    color2 = tex2D( _lightfieldTexture, uv2.x, uv2.y );
+    color3 = tex2D( _lightfieldTexture, uv3.x, uv3.y );
+    
+    color0.w = color1.w = color2.w = color3.w = 0.25;
+        
+    collectedColor += color0;
+    collectedColor += (color1 * color1.w) + (collectedColor * (1. - color1.w));
+    collectedColor += (color2 * color2.w) + (collectedColor * (1. - color2.w));
+    collectedColor += (color3 * color3.w) + (collectedColor * (1. - color3.w));
+    
+    /*collectedColor = tex2D( _lightfieldTexture, s, t ); 
+    return;*/
+        
+    /*if( ( s0 >= 0. && s0 <= 1. ) && ( t0 >= 0. && t0 <= 1. ) ) 
+    {        
+        float4 color = tex2D( _lightfieldTexture, s0, t0 );    
+        collectedColor += color * .5;
+        collectedColor /= collectedColor.w;
+    }
+    
+    if( ( s1 >= 0. && s1 <= 1. ) && ( t1 >= 0. && t1 <= 1. ) ) 
+    {        
+        float4 color = tex2D( _lightfieldTexture, s1, t1 );    
+        collectedColor += color * .5;
+        collectedColor /= collectedColor.w;
+    }
+    
+    if( ( s2 >= 0. && s2 <= 1. ) && ( t2 >= 0. && t2 <= 1. ) ) 
+    {        
+        float4 color = tex2D( _lightfieldTexture, s2, t2 );    
+        collectedColor += color * .5;
+        collectedColor /= collectedColor.w;
+    }
+    
+    if( ( s3 >= 0. && s3 <= 1. ) && ( t3 >= 0. && t3 <= 1. ) ) 
+    {        
+        float4 color = tex2D( _lightfieldTexture, s3, t3 );    
+        collectedColor += color * .5;
+        collectedColor /= collectedColor.w;
+    }*/
 }
 
 __global__
@@ -100,7 +228,7 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     uint x = blockIdx.x * blockDim.x + threadIdx.x;
     uint y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if( ( x >= canvasWidth ) || ( y >= canvasHeight ) )
+    if( x >= canvasWidth || y >= canvasHeight )
         return;
 
     //Mapeia x e y para o intervalo [-1, 1]
@@ -114,30 +242,47 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     
     float3 farPoint = make_float3( farX, farY, farZ );
             
-    //Cria o quad
+    // Cria o quad
     Quad quad;
     quad.tlPoint = make_float3( 0, 0, 0 );
-    quad.blPoint = make_float3( 0, _cudaKernelParameters.nCameraRows, 0 );
-    quad.trPoint = make_float3( _cudaKernelParameters.nCameraCollumns, 0, 0 );
+    quad.blPoint = make_float3( 0, _cudaKernelParameters.nCameraRows - 1, 0 );
+    quad.trPoint = make_float3( _cudaKernelParameters.nCameraCollumns - 1, 0, 0 );
     
     Ray eyeRay;
     eyeRay.origin = make_float3( nearX, nearY, nearZ );
-    eyeRay.direction = farPoint - eyeRay.origin;// make_float3( farX - nearX, farY - nearY, farZ - nearZ );
-
+    eyeRay.direction = farPoint - eyeRay.origin;
+    
+    Plane focalPlane;
+    focalPlane.normal = normalize( cross( quad.blPoint, quad.trPoint ) );
+    focalPlane.point  = make_float3( 0, 0, _cudaKernelParameters.focalPlane );
+    
     // Acha a interseção com a bounding box
     float3 hitPoint;
+    float4 collectedColor = make_float4( 0, 0, 0, 0 );
+    
+    /*bool hit = intersectPlane( eyeRay, focalPlane, &hitPoint );
+    
+    // Para se o raio não interceptou o plano focal.
+    if( hit )
+    {
+        float depth = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin );
+        collectedColor.x = collectedColor.y = collectedColor.z = depth;
+        collectedColor.w = 1.;
+    }*/
+    
     bool hit = intersectQuad( eyeRay, quad, &hitPoint );
     
-    // Para se o raio não interceptou a bounding box.
-    if( !hit )
-        return;
+    // Para se o raio não interceptou o quad.
+    if( hit )
+    {    
+        // Traça o raio    
+        trace( eyeRay, quad, focalPlane, hitPoint, collectedColor );
 
-    // Traça o raio    
-    float4 collectedColor = make_float4( 0, 0, 0, 0 );
-    trace( quad, hitPoint, collectedColor );
-
-    // Grava saidas
-    d_depthBuffer[ y * canvasWidth + x ] = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin ); // TODO
+        // Grava saidas
+        float depth = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin );
+        d_depthBuffer[ y * canvasWidth + x ] = depth;
+    }
+    
     d_output[ y * canvasWidth + x ] = rgbaFloatToInt( collectedColor );
 }
 

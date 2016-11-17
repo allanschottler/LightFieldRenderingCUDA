@@ -3,6 +3,9 @@
  * Author: allan
  */
 
+#include <gtk-2.0/gtk/gtkspinbutton.h>
+#include <gtk-2.0/gtk/gtkadjustment.h>
+
 #include "MainWindow.h"
 #include "LightFieldApplication.h"
 #include "ThreadManager.h"
@@ -39,6 +42,8 @@ MainWindow::MainWindow( std::string title ) :
     _quitButton = GTK_WIDGET( gtk_builder_get_object( builder, "imagemenuitem5" ) );
     _aboutButton = GTK_WIDGET( gtk_builder_get_object( builder, "imagemenuitem10" ) );
         
+    _focalPlaneSpinButton = GTK_WIDGET( gtk_builder_get_object( builder, "spinbuttonFocalPlane" ) );
+    
     g_timeout_add( 15, (GSourceFunc)( &MainWindow::onIdle ), this );
     
     g_signal_connect( G_OBJECT( _dialog ), "destroy", G_CALLBACK( &MainWindow::onDestroy ), NULL );
@@ -46,8 +51,10 @@ MainWindow::MainWindow( std::string title ) :
     
     g_signal_connect( G_OBJECT( _openButton ), "activate", G_CALLBACK( &MainWindow::onOpenButtonClicked ), _dialog );
     g_signal_connect( G_OBJECT( _quitButton ), "activate", G_CALLBACK( &MainWindow::onQuitButtonClicked ), _dialog );
-    g_signal_connect( G_OBJECT( _aboutButton ), "activate", G_CALLBACK( &MainWindow::onAboutButtonClicked ), _dialog );
-        
+    g_signal_connect( G_OBJECT( _aboutButton ), "activate", G_CALLBACK( &MainWindow::onAboutButtonClicked ), _dialog );    
+    
+    g_signal_connect( G_OBJECT( _focalPlaneSpinButton ), "value-changed", G_CALLBACK( &MainWindow::onFocalPlaneChanged ), _dialog );
+    
     g_object_set_data( ( GObject* ) _dialog, "THIS", ( gpointer )this );
 }
 
@@ -148,4 +155,25 @@ gboolean MainWindow::onAboutButtonClicked( GtkWidget* button, gpointer pointer )
     gtk_widget_show_all( dialog->_aboutDialog );
     
     return TRUE;
+}
+
+gboolean MainWindow::onFocalPlaneChanged( GtkWidget* spinbutton, gpointer pointer )
+{
+    gpointer result = g_object_get_data( ( GObject* ) pointer, "THIS" );
+    
+    if( result == NULL )
+        return FALSE;
+    
+    MainWindow* dialog = reinterpret_cast< MainWindow* >( result );
+    
+    float focalPlane = gtk_spin_button_get_value_as_float( GTK_SPIN_BUTTON( dialog->_focalPlaneSpinButton ) );    
+    LightFieldApplication::getInstance()->setFocalPlane( focalPlane );
+    
+    return TRUE;
+}
+
+void MainWindow::setFocalPlaneSpinAdjustment( double minValue, double maxValue, double value )
+{
+    GtkAdjustment* adjustment = ( GtkAdjustment* )gtk_adjustment_new( value, minValue, maxValue, 1., 5., 0.0 );
+    gtk_spin_button_set_adjustment( GTK_SPIN_BUTTON( _focalPlaneSpinButton ), GTK_ADJUSTMENT( adjustment ) );
 }

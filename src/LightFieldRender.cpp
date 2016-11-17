@@ -92,11 +92,11 @@ void LightFieldRender::render()
     initCudaBuffers( d_output, d_depthBuffer );    
     
     // Print camera 
-    //debugInfo();
+    debugInfo();
 
     float elapsedTime = renderKernel( gridSize, blockSize, d_output, d_depthBuffer );
     
-    CUDAManager::getInstance()->getLastError( "render_kernel failed" );
+    CUDAManager::getInstance()->getLastError( "renderKernel failed" );
 
     cleanCudaBuffers( d_depthBuffer );
 
@@ -168,6 +168,13 @@ void LightFieldRender::getBoundingBox( float& xMin, float& xMax, float& yMin, fl
     
     xMax = (float)xMaxi;
     yMax = (float)yMaxi;
+}
+
+
+void LightFieldRender::setFocalPlane( float focalPlane )
+{
+    _kernelParameters.focalPlane = focalPlane;
+    std::cout << "FOCAL PLANE : " << focalPlane << std::endl;
 }
 
 

@@ -13,6 +13,7 @@
 
 #include "LightFieldImage.h"
 #include "LightFieldImageLoader.h"
+#include "LightFieldRender.h"
 
 class LightFieldApplication 
 {
@@ -25,6 +26,8 @@ public:
     bool loadLightField( std::string lightFieldHeader );
     
     void createLightFieldNode();
+    
+    void setFocalPlane( float focalPlane );
     
 private:
     
@@ -40,6 +43,10 @@ private:
     LightFieldImageLoader _lightFieldLoader;
     
     LightFieldImage* _lightFieldImage;
+    
+    LightFieldRender* _lightFieldRender;
+    
+    float _focalPlane;
 };
 
 #endif /* LIGHTFIELDAPPLICATION_H */

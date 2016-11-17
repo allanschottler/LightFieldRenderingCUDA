@@ -16,7 +16,7 @@ public:
     
     LightFieldImage( size_t nRows, size_t nCollumns, size_t microImageWidth, size_t microImageHeight );
     
-    virtual ~LightFieldImage() {};
+    virtual ~LightFieldImage() { delete[] _texels; };
     
     void setMicroImage( size_t index1d, MicroImage microImage );
     
@@ -39,6 +39,8 @@ private:
     size_t _microImageHeight;
     
     std::vector< MicroImage > _microImages;
+    
+    unsigned char* _texels;
 };
 
 #endif	/* LIGHTFIELDIMAGE_H */

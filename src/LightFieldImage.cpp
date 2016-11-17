@@ -17,12 +17,32 @@ LightFieldImage::LightFieldImage( size_t nRows, size_t nCollumns, size_t microIm
     _microImageHeight( microImageHeight )
 {
     _microImages.resize( _nRows * _nCollumns );
+    _texels = new unsigned char[ _nRows * _nCollumns * _microImageWidth * _microImageHeight * 4 ];
 }
 
 
 void LightFieldImage::setMicroImage( size_t index1d, LightFieldImage::MicroImage microImage )
 {
     _microImages[ index1d ] = microImage;
+    
+    size_t iCollumn = index1d % _nCollumns;
+    size_t iRow = ( index1d - iCollumn ) / _nCollumns;
+    
+    for( size_t y = 0; y < _microImageHeight; y++ ) 
+    {
+        for( size_t x = 0; x < _microImageWidth; x++ ) 
+        {            
+            size_t i = y * _microImageWidth + x;
+            size_t t = iRow * _nCollumns * _microImageWidth * _microImageHeight +
+                    y * _nCollumns * _microImageWidth +
+                    iCollumn * _microImageWidth + x;
+
+            _texels[ 4 * t ]     = microImage[ 4 * i ]; /// 255.;
+            _texels[ 4 * t + 1 ] = microImage[ 4 * i + 1 ]; /// 255.;
+            _texels[ 4 * t + 2 ] = microImage[ 4 * i + 2 ]; /// 255.;
+            _texels[ 4 * t + 3 ] = microImage[ 4 * i + 3 ]; /// 255.;
+        }
+    }
 }
     
 
@@ -40,7 +60,7 @@ size_t LightFieldImage::getIndex1d( size_t row, size_t collumn )
 
 unsigned char* LightFieldImage::getTexels()
 {
-    unsigned char* texels = new unsigned char[ _nRows * _nCollumns * _microImageWidth * _microImageHeight * 4 ];//[ _microImageWidth * _microImageHeight * 4 ]; //
+    //unsigned char* texels = new unsigned char[ _nRows * _nCollumns * _microImageWidth * _microImageHeight * 4 ];//[ _microImageWidth * _microImageHeight * 4 ]; //
 //    unsigned char* texels = new unsigned char[ _microImageWidth * _microImageHeight * 4 ]; //
 //    LightFieldImage::MicroImage microImage = getMicroImage( 1 );
     
@@ -64,7 +84,7 @@ unsigned char* LightFieldImage::getTexels()
         texels[ i + 2 ] = 1.0;
         texels[ i + 3 ] = 1.0;
     }*/
-    for( size_t iRow = 0; iRow < _nRows; iRow++ )    
+    /*for( size_t iRow = 0; iRow < _nRows; iRow++ )    
     {
         for( size_t iCollumn = 0; iCollumn < _nCollumns; iCollumn++ )
         {
@@ -75,10 +95,7 @@ unsigned char* LightFieldImage::getTexels()
             {
                 for( size_t x = 0; x < _microImageWidth; x++ )
                 {
-                    /*if( x == _microImageWidth - 1 )
-                    {
-                        std::cout << "break\n";
-                    }*/
+                    
                     size_t i = y * _microImageWidth + x;
                     size_t t = iRow * _nCollumns * _microImageWidth * _microImageHeight + 
                                y * _nCollumns * _microImageWidth + 
@@ -91,9 +108,9 @@ unsigned char* LightFieldImage::getTexels()
                 }
             }
         }
-    }
+    }*/
     
-    return texels;
+    return _texels;
 }
 
 

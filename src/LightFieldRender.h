@@ -42,7 +42,11 @@ public:
         float zTransformParamA;
         float zTransformParamB;
         
+        /* Dimensões da câmera plenóptica */
         int nCameraRows, nCameraCollumns;
+        
+        /* Distância do plano focal ao plano das câmeras */
+        float focalPlane;
     };
     
     LightFieldRender( LightFieldImage* lightFieldImage );
@@ -51,7 +55,15 @@ public:
     
     void render();
     
+    float renderKernel( dim3 gridSize, dim3 blockSize, uint* d_output, float* d_depthBuffer );
+    
     void getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax );
+    
+    void setFocalPlane( float focalPlane );
+    
+    void computeFPS( float elapsedTime, float& fps );    
+    
+private:    
     
     void initLightFieldTexture( unsigned char* texels, int width, int height );
     
@@ -64,14 +76,6 @@ public:
     void initKernelParameters();
     
     void updateParameters();
-    
-    void computeFPS( float elapsedTime, float& fps );
-    
-public:
-    
-    float renderKernel( dim3 gridSize, dim3 blockSize, uint* d_output, float* d_depthBuffer );
-    
-private:
     
     void debugInfo();
     

@@ -147,5 +147,5 @@ void LightFieldImageLoader::receiveThreadState( Thread* thread, const ThreadStat
         case THREAD_ABORT:
         case THREAD_CANCELED:
             break;
-}
+    }
 }

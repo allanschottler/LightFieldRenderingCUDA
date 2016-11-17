@@ -23,15 +23,17 @@ public:
     
     OSGGTKDrawingArea& getCanvas() { return _canvas; };
     
+    void setFocalPlaneSpinAdjustment( double minValue, double maxValue, double value );
+    
 private:
 
     // CALLBACKS
     static gboolean onDestroy();
     static gboolean onIdle( gpointer pointer );
-
     static gboolean onOpenButtonClicked( GtkWidget* button, gpointer pointer );
     static gboolean onQuitButtonClicked( GtkWidget* button, gpointer pointer );
     static gboolean onAboutButtonClicked( GtkWidget* button, gpointer pointer );
+    static gboolean onFocalPlaneChanged( GtkWidget* spinbutton, gpointer pointer );
     
     std::string _title;
     
@@ -44,7 +46,10 @@ private:
     //Menu
     GtkWidget* _openButton;
     GtkWidget* _quitButton;
-    GtkWidget* _aboutButton;     
+    GtkWidget* _aboutButton;
+    
+    // Sidebar    
+    GtkWidget* _focalPlaneSpinButton;  
 };
 
 #endif /* MAINWINDOW_H */
