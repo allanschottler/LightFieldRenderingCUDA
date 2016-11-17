@@ -174,6 +174,6 @@ gboolean MainWindow::onFocalPlaneChanged( GtkWidget* spinbutton, gpointer pointe
 
 void MainWindow::setFocalPlaneSpinAdjustment( double minValue, double maxValue, double value )
 {
-    GtkAdjustment* adjustment = ( GtkAdjustment* )gtk_adjustment_new( value, minValue, maxValue, 1., 5., 0.0 );
+    GtkAdjustment* adjustment = ( GtkAdjustment* )gtk_adjustment_new( value, minValue, maxValue, .01, 1., 0.0 );
     gtk_spin_button_set_adjustment( GTK_SPIN_BUTTON( _focalPlaneSpinButton ), GTK_ADJUSTMENT( adjustment ) );
 }

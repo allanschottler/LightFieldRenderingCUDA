@@ -100,13 +100,7 @@ void LightFieldApplication::createLightFieldNode()
 void LightFieldApplication::setFocalPlane( float focalPlane )
 {
     _focalPlane = focalPlane;
-    
-    /*double left, right, bottom, top, zNear, zFar;
-    _window->getCanvas().getCamera()->getProjectionMatrixAsFrustum( left, right, bottom, top, zNear, zFar );
-    
-    zFar = focalPlane < zNear ? zNear : focalPlane;
-    _window->getCanvas().getCamera()->setProjectionMatrixAsFrustum( left, right, bottom, top, zNear, zFar );*/
-    
+        
     if( _lightFieldRender )
         _lightFieldRender->setFocalPlane( focalPlane );
 }

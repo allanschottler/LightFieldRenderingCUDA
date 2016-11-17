@@ -63,16 +63,6 @@ bool intersectQuad( Ray ray, Quad quad, float3* intersectedPoint )
     plane.normal = n;
     plane.point = quad.tlPoint;
 
-    // Testa se acerta plano do quad
-    /*float ndotdR = dot( n, ray.direction );
-
-    if( fabs( ndotdR ) < 1e-6f ) // tolerance
-        return false;
-
-    // Calcula ponto de interseção
-    float t = dot( -n, ( ray.origin - quad.tlPoint ) ) / ndotdR;
-    *intersectedPoint = ray.origin + ray.direction * t;*/
-
     if( intersectPlane( ray, plane, intersectedPoint ) )
     {
         // Verifica se interseção está contido no quad
@@ -157,11 +147,7 @@ void trace( Ray& ray, Quad& quad, Plane& focalPlane, float3& hitPoint, float4& c
     bool hit = intersectPlane( ray, focalPlane, &hitPointPlane );
     
     if( !hit ) 
-        return; // Nunca deve cair aqui
-        
-//    float2 texCoord = make_float2(
-//        map( hitPoint.x, quad.blPoint.x, quad.trPoint.x, 0, 1 ),
-//        map( hitPoint.y, quad.blPoint.y, quad.trPoint.y, 0, 1 ) );
+        return; // Nunca deve cair aqui        
     
     float3 c0 = make_float3( 0., 0., 0. );
     float3 c1 = make_float3( 0., 0., 0. );
@@ -176,49 +162,13 @@ void trace( Ray& ray, Quad& quad, Plane& focalPlane, float3& hitPoint, float4& c
     mapWorldToTexCoord( focalPlane, hitPointPlane, c2, uv2 );
     mapWorldToTexCoord( focalPlane, hitPointPlane, c3, uv3 );
     
-    float4 color0, color1, color2, color3;
-    color0 = tex2D( _lightfieldTexture, uv0.x, uv0.y );
-    color1 = tex2D( _lightfieldTexture, uv1.x, uv1.y );
-    color2 = tex2D( _lightfieldTexture, uv2.x, uv2.y );
-    color3 = tex2D( _lightfieldTexture, uv3.x, uv3.y );
+    float4 colorA0, colorA1, colorA2, colorA3;
+    colorA0 = tex2D( _lightfieldTexture, uv0.x, uv0.y );
+    colorA1 = tex2D( _lightfieldTexture, uv1.x, uv1.y );
+    colorA2 = tex2D( _lightfieldTexture, uv2.x, uv2.y );
+    colorA3 = tex2D( _lightfieldTexture, uv3.x, uv3.y );
     
-    color0.w = color1.w = color2.w = color3.w = 0.25;
-        
-    collectedColor += color0;
-    collectedColor += (color1 * color1.w) + (collectedColor * (1. - color1.w));
-    collectedColor += (color2 * color2.w) + (collectedColor * (1. - color2.w));
-    collectedColor += (color3 * color3.w) + (collectedColor * (1. - color3.w));
-    
-    /*collectedColor = tex2D( _lightfieldTexture, s, t ); 
-    return;*/
-        
-    /*if( ( s0 >= 0. && s0 <= 1. ) && ( t0 >= 0. && t0 <= 1. ) ) 
-    {        
-        float4 color = tex2D( _lightfieldTexture, s0, t0 );    
-        collectedColor += color * .5;
-        collectedColor /= collectedColor.w;
-    }
-    
-    if( ( s1 >= 0. && s1 <= 1. ) && ( t1 >= 0. && t1 <= 1. ) ) 
-    {        
-        float4 color = tex2D( _lightfieldTexture, s1, t1 );    
-        collectedColor += color * .5;
-        collectedColor /= collectedColor.w;
-    }
-    
-    if( ( s2 >= 0. && s2 <= 1. ) && ( t2 >= 0. && t2 <= 1. ) ) 
-    {        
-        float4 color = tex2D( _lightfieldTexture, s2, t2 );    
-        collectedColor += color * .5;
-        collectedColor /= collectedColor.w;
-    }
-    
-    if( ( s3 >= 0. && s3 <= 1. ) && ( t3 >= 0. && t3 <= 1. ) ) 
-    {        
-        float4 color = tex2D( _lightfieldTexture, s3, t3 );    
-        collectedColor += color * .5;
-        collectedColor /= collectedColor.w;
-    }*/
+    collectedColor = lerp( lerp( lerp( colorA0, colorA1, .5 ), colorA2, .5 ), colorA3, .5 );
 }
 
 __global__
@@ -259,30 +209,20 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     // Acha a interseção com a bounding box
     float3 hitPoint;
     float4 collectedColor = make_float4( 0, 0, 0, 0 );
-    
-    /*bool hit = intersectPlane( eyeRay, focalPlane, &hitPoint );
-    
-    // Para se o raio não interceptou o plano focal.
-    if( hit )
-    {
-        float depth = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin );
-        collectedColor.x = collectedColor.y = collectedColor.z = depth;
-        collectedColor.w = 1.;
-    }*/
-    
+        
     bool hit = intersectQuad( eyeRay, quad, &hitPoint );
     
     // Para se o raio não interceptou o quad.
-    if( hit )
-    {    
-        // Traça o raio    
-        trace( eyeRay, quad, focalPlane, hitPoint, collectedColor );
-
-        // Grava saidas
-        float depth = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin );
-        d_depthBuffer[ y * canvasWidth + x ] = depth;
-    }
+    if( !hit )
+        return;
     
+    // Traça o raio    
+    trace( eyeRay, quad, focalPlane, hitPoint, collectedColor );
+
+    // Grava saidas
+    float depth = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin );
+    
+    d_depthBuffer[ y * canvasWidth + x ] = depth;    
     d_output[ y * canvasWidth + x ] = rgbaFloatToInt( collectedColor );
 }
 
