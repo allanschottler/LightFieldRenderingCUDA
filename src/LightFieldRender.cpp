@@ -52,10 +52,13 @@ LightFieldRender::~LightFieldRender()
         glDeleteTextures( 1, &_outTexture );
     }
 
+    CUDAManager::getInstance()->collectError( 
+        cudaFreeArray( _lightFieldArray ) );
+    
     CUDAManager::getInstance()->setDefaultDevice();
 
-    if( _lightFieldTexels )
-        delete[] _lightFieldTexels;
+    if( _lightFieldImage )
+        delete _lightFieldImage;
         
     if( _depthBuffer )
         delete[] _depthBuffer;

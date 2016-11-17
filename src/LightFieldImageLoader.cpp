@@ -39,6 +39,8 @@ bool enumerateFiles( std::string dir, std::vector< std::string >& files )
 
 bool LightFieldImageLoader::load( std::string headerPath )
 {
+    _lightFieldImage = nullptr;
+    
     _nFinishedThreads = _nFilesToLoad = 0;
     
     FileName::getDirectory( headerPath, _folderPath );

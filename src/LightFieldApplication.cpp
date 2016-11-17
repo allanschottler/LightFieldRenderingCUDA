@@ -45,9 +45,6 @@ LightFieldApplication::~LightFieldApplication()
     if( _lightFieldRender )
         delete _lightFieldRender;
     
-    if( _lightFieldImage )
-        delete _lightFieldImage;
-    
     delete _instance;    
     _instance = 0;
 }
@@ -66,14 +63,19 @@ bool LightFieldApplication::loadLightField( std::string lightFieldHeader )
 {    
     // Dispara threads
     if( !_lightFieldLoader.load( lightFieldHeader ) )
-        return false;        
+        return false;              
     
     return true;
 }
 
 
 void LightFieldApplication::createLightFieldNode()
-{    
+{            
+    if( _lightFieldRender )
+        delete _lightFieldRender; 
+    
+    _scene->removeChildren( 0, _scene->getNumChildren() );  
+    
     // Pega imagem depois de threads terminarem
     _lightFieldImage = _lightFieldLoader.getLightFieldImage();            
     
