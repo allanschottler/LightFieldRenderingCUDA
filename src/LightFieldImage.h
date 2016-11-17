@@ -8,15 +8,18 @@
 
 #include <vector>
 
-class LightFieldImage 
+namespace LightField
+{
+
+class Image 
 {
 public:
     
     typedef std::vector< unsigned char > MicroImage;
     
-    LightFieldImage( size_t nRows, size_t nCollumns, size_t microImageWidth, size_t microImageHeight );
+    Image( size_t nRows, size_t nCollumns, size_t microImageWidth, size_t microImageHeight );
     
-    virtual ~LightFieldImage() { delete[] _texels; };
+    virtual ~Image() { delete[] _texels; };
     
     void setMicroImage( size_t index1d, MicroImage microImage );
     
@@ -42,6 +45,8 @@ private:
     
     unsigned char* _texels;
 };
+
+}
 
 #endif	/* LIGHTFIELDIMAGE_H */
 

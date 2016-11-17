@@ -10,13 +10,16 @@
 
 #include "LightFieldRender.h"
 
-class LightFieldDrawable : public osg::Drawable
+namespace LightField
+{
+
+class Drawable : public osg::Drawable
 {
 public:
     
-    LightFieldDrawable( LightFieldRender* lightFieldRender );
+    Drawable( Render* lightFieldRender );
     
-    virtual ~LightFieldDrawable();
+    virtual ~Drawable();
     
     /**
     * Retorna a caixa envolvente
@@ -33,7 +36,7 @@ public:
      */
     osg::Object* cloneType() const
     {
-        return new LightFieldDrawable( _lightFieldRender );
+        return new Drawable( _lightFieldRender );
     }
 
     /**
@@ -41,13 +44,15 @@ public:
      */
     osg::Object* clone( const osg::CopyOp& copyop ) const
     {
-        return new LightFieldDrawable( *this );
+        return new Drawable( *this );
     }
     
 private:
 
-    LightFieldRender* _lightFieldRender;
+    Render* _lightFieldRender;
 };
+
+}
 
 #endif	/* LIGHTFIELDDRAWABLE_H */
 

@@ -15,13 +15,16 @@
 #include "LightFieldImageLoader.h"
 #include "LightFieldRender.h"
 
-class LightFieldApplication 
+namespace LightField
+{
+    
+class Application 
 {
 public:
     
-    virtual ~LightFieldApplication();
+    virtual ~Application();
     
-    static LightFieldApplication* getInstance();
+    static Application* getInstance();
     
     bool loadLightField( std::string lightFieldHeader );
     
@@ -31,23 +34,25 @@ public:
     
 private:
     
-    LightFieldApplication();   
+    Application();   
     
     
-    static LightFieldApplication* _instance;
+    static Application* _instance;
     
     MainWindow* _window;
     
     osg::ref_ptr< osg::Group > _scene;    
     
-    LightFieldImageLoader _lightFieldLoader;
+    ImageLoader _lightFieldLoader;
     
-    LightFieldImage* _lightFieldImage;
+    Image* _lightFieldImage;
     
-    LightFieldRender* _lightFieldRender;
+    Render* _lightFieldRender;
     
     float _focalPlane;
 };
+
+}
 
 #endif /* LIGHTFIELDAPPLICATION_H */
 

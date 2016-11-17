@@ -36,8 +36,10 @@ bool enumerateFiles( std::string dir, std::vector< std::string >& files )
     return true;
 }
 
+namespace LightField
+{
 
-bool LightFieldImageLoader::load( std::string headerPath )
+bool ImageLoader::load( std::string headerPath )
 {
     _lightFieldImage = nullptr;
     
@@ -85,7 +87,7 @@ bool LightFieldImageLoader::load( std::string headerPath )
 }
     
     
-bool LightFieldImageLoader::readHeader()
+bool ImageLoader::readHeader()
 {
     size_t nRows, nCollumns, imagesWidth, imagesHeight;
     
@@ -119,13 +121,13 @@ bool LightFieldImageLoader::readHeader()
     imagesWidth  = std::stoi( tokens[ 2 ], nullptr );
     imagesHeight = std::stoi( tokens[ 3 ], nullptr );
     
-    _lightFieldImage = new LightFieldImage( nRows, nCollumns, imagesWidth, imagesHeight );
+    _lightFieldImage = new Image( nRows, nCollumns, imagesWidth, imagesHeight );
     
     return true;
 }
    
 
-void LightFieldImageLoader::receiveThreadState( Thread* thread, const ThreadState& state )
+void ImageLoader::receiveThreadState( Thread* thread, const ThreadState& state )
 {
     PNGLoaderThread* loaderThread = dynamic_cast< PNGLoaderThread* >( thread );
     
@@ -140,7 +142,7 @@ void LightFieldImageLoader::receiveThreadState( Thread* thread, const ThreadStat
             if( _nFinishedThreads == _nFilesToLoad )
             {
                 std::cout << "All done!\n";
-                LightFieldApplication::getInstance()->createLightFieldNode();
+                Application::getInstance()->createLightFieldNode();
             }
         }
             break;
@@ -150,4 +152,6 @@ void LightFieldImageLoader::receiveThreadState( Thread* thread, const ThreadStat
         case THREAD_CANCELED:
             break;
     }
+}
+
 }

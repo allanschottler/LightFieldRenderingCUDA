@@ -11,19 +11,22 @@
 
 #include <string>
 
-class LightFieldImageLoader : public ThreadListener
+namespace LightField
+{
+
+class ImageLoader : public ThreadListener
 {
 public:
     
-    LightFieldImageLoader() : _lightFieldImage( nullptr ) {};
+    ImageLoader() : _lightFieldImage( nullptr ) {};
     
-    virtual ~LightFieldImageLoader() {};
+    virtual ~ImageLoader() {};
     
     bool load( std::string headerPath );    
 
     void receiveThreadState( Thread* thread, const ThreadState& state );
 
-    LightFieldImage* getLightFieldImage() { return _lightFieldImage; };
+    Image* getLightFieldImage() { return _lightFieldImage; };
     
 private:
     
@@ -35,11 +38,13 @@ private:
     
     std::string _headerPath;
     
-    LightFieldImage* _lightFieldImage;
+    Image* _lightFieldImage;
     
     int _nFilesToLoad, _nFinishedThreads;
 
 };
+
+}
 
 #endif	/* LIGHTFIELDIMAGELOADER_H */
 

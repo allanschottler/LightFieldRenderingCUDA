@@ -107,7 +107,7 @@ gboolean MainWindow::onOpenButtonClicked( GtkWidget* button, gpointer pointer )
         std::string filenameStr( filename );
         gtk_window_set_title( GTK_WINDOW( dialog->_dialog ), dialog->_title.c_str() );
         
-        if( LightFieldApplication::getInstance()->loadLightField( filenameStr ) )
+        if( LightField::Application::getInstance()->loadLightField( filenameStr ) )
         {
             std::string newTitle( dialog->_title + " - " + filenameStr );
             gtk_window_set_title( GTK_WINDOW( dialog->_dialog ), newTitle.c_str() );
@@ -167,7 +167,7 @@ gboolean MainWindow::onFocalPlaneChanged( GtkWidget* spinbutton, gpointer pointe
     MainWindow* dialog = reinterpret_cast< MainWindow* >( result );
     
     float focalPlane = gtk_spin_button_get_value_as_float( GTK_SPIN_BUTTON( dialog->_focalPlaneSpinButton ) );    
-    LightFieldApplication::getInstance()->setFocalPlane( focalPlane );
+    LightField::Application::getInstance()->setFocalPlane( focalPlane );
     
     return TRUE;
 }

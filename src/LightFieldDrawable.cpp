@@ -5,19 +5,22 @@
 
 #include "LightFieldDrawable.h"
 
-LightFieldDrawable::LightFieldDrawable( LightFieldRender* lightFieldRender ) :
+namespace LightField
+{
+
+Drawable::Drawable( Render* lightFieldRender ) :
     _lightFieldRender( lightFieldRender )
 {
     setUseDisplayList( false );
 }
 
 
-LightFieldDrawable::~LightFieldDrawable() 
+Drawable::~Drawable() 
 {
 }
 
 
-osg::BoundingBox LightFieldDrawable::computeBoundingBox() const
+osg::BoundingBox Drawable::computeBoundingBox() const
 {
     float xMin, xMax, yMin, yMax, zMin, zMax;
     _lightFieldRender->getBoundingBox( xMin, xMax, yMin, yMax, zMin, zMax );
@@ -27,7 +30,9 @@ osg::BoundingBox LightFieldDrawable::computeBoundingBox() const
 }
 
    
-void LightFieldDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
+void Drawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 {
     _lightFieldRender->render();
+}
+
 }

@@ -11,7 +11,10 @@
 #include "CUDAManager.h"
 #include "LightFieldImage.h"
 
-class LightFieldRender 
+namespace LightField
+{
+
+class Render 
 {
 public:
     
@@ -49,38 +52,101 @@ public:
         float focalPlane;
     };
     
-    LightFieldRender( LightFieldImage* lightFieldImage );
+    /**
+     * Construtor
+     * @param lightFieldImage
+     */
+    Render( Image* lightFieldImage );
     
-    virtual ~LightFieldRender();
+    /**
+     * Destrutor
+     */
+    virtual ~Render();
     
+    /**
+     * Renderiza o PBO
+     */
     void render();
     
+    /**
+     * Renderiza o kernel
+     * @param gridSize
+     * @param blockSize
+     * @param d_output
+     * @param d_depthBuffer
+     * @return 
+     */
     float renderKernel( dim3 gridSize, dim3 blockSize, uint* d_output, float* d_depthBuffer );
     
+    /**
+     * Retorna bounding box
+     * @param xMin
+     * @param xMax
+     * @param yMin
+     * @param yMax
+     * @param zMin
+     * @param zMax
+     */
     void getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax );
     
+    /**
+     * Define o plano focal da camera
+     * @param focalPlane
+     */
     void setFocalPlane( float focalPlane );
     
+    /**
+     * Computa o fps atual
+     * @param elapsedTime
+     * @param fps
+     */
     void computeFPS( float elapsedTime, float& fps );    
     
 private:    
     
+    /**
+     * Inicializa a textura na placa
+     * @param texels
+     * @param width
+     * @param height
+     */
     void initLightFieldTexture( unsigned char* texels, int width, int height );
     
+    /**
+     * Inicializa o PBO de saída da placa
+     */
     void initPBO();
     
+    /**
+     * Inicializa buffers de saída da placa
+     * @param d_output
+     * @param d_depthBuffer
+     */
     void initCudaBuffers( uint*& d_output, float*& d_depthBuffer );
         
+    /**
+     * Limpa buffers de saída da placa
+     * @param d_depthBuffer
+     */
     void cleanCudaBuffers( float*& d_depthBuffer );
     
+    /**
+     * Inicializa parametros na placa
+     */
     void initKernelParameters();
     
+    /**
+     * Atualiza parametros usados no kernel
+     */
     void updateParameters();
     
+    /**
+     * Printa informações da câmera
+     */
     void debugInfo();
     
 
-    LightFieldImage* _lightFieldImage;
+    Image* _lightFieldImage;
     
     /* Buffer intermediário para passagem de dados para a placa */
     unsigned char* _lightFieldTexels;
@@ -113,6 +179,8 @@ private:
     time_t _startTime;
     time_t _endTime;
 };
+
+}
 
 #endif	/* LIGHTFIELDRENDER_H */
 
