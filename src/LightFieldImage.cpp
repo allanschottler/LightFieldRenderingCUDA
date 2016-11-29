@@ -69,8 +69,8 @@ unsigned char* Image::getTexels()
 
 void Image::getTextureDimensions( int& width, int& height )
 {
-    width = _nCollumns * _microImageWidth;
-    height = _nRows * _microImageHeight;
+    width = _microImageWidth;
+    height = _microImageHeight;
 }
 
 

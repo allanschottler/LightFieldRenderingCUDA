@@ -11,14 +11,17 @@
 #include "helper_math.h"
 #include "CUDAManager.h"
 
-namespace LightField
-{
-__constant__ Render::KernelParameters _cudaKernelParameters;
-}
-
-texture< uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat > _lightfieldTexture;
-
 using namespace LightField;
+
+/****************************/
+/*          Global          */
+/****************************/
+
+// Global kernel parameters
+__constant__ Render::KernelParameters _cudaKernelParameters;
+
+// Global texture
+texture< uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat > _lightfieldTexture;
 
 struct Ray
 {
@@ -39,7 +42,10 @@ struct Plane
     float3 point;
 };
 
-// Auxiliares
+/********************************/
+/*          Auxiliares          */
+/********************************/
+
 __device__
 bool intersectPlane( Ray ray, Plane plane, float3* intersectedPoint )
 {    
@@ -53,7 +59,7 @@ bool intersectPlane( Ray ray, Plane plane, float3* intersectedPoint )
     float t = dot( -plane.normal, ( ray.origin - plane.point ) ) / ndotdR;
     *intersectedPoint = ray.origin + ray.direction * t;
     
-    return t >= 0;
+    return true;
 }
 
 __device__
@@ -131,7 +137,140 @@ void getNeighbourCameras( float3 hitPoint, float3& c0, float3& c1, float3& c2, f
 }
 
 __device__
-void mapWorldToTexCoord( Plane& focalPlane, float3 fg, float3 st, float2& uv )
+float depthEstimation( float2 uv )
+{  
+    // Passo de uma microimagem em texcoord
+    float sStep = 1. / _cudaKernelParameters.nCameraCollumns;
+    float tStep = 1. / _cudaKernelParameters.nCameraRows;  
+    float2 step = make_float2( sStep, tStep );
+    
+    int numPatches = 1;
+    int numImages = 1;
+    float bestSlope = 0.;
+    float bestMatch = 10000000000.;
+    float microSize = 1.;//min( _cudaKernelParameters.cameraWidth, _cudaKernelParameters.cameraHeight );
+    float pixelSize = 0.1;
+    
+    for( float patchSize = microSize / 2.; patchSize >= 0.; patchSize -= pixelSize )
+    {
+        float score = 0.;
+        
+        for( int i = -numPatches; i <= numPatches; i += pixelSize )
+        {
+            for( int j = -numPatches; j <= numPatches; j += pixelSize )
+            {
+                float2 patchShift = make_float2( i, j ) * patchSize / 2.;
+                
+                /*float2 texCoordLeft = leftBase + pixelShift;
+                float4 left = tex2D( _lightfieldTexture, texCoordLeft.x, texCoordLeft.y );*/
+                
+                for( int m = -numImages; m <= numImages; m++ )
+                {
+                    for( int n = -numImages; n <= numImages; n++ )
+                    {
+                        if( m == 0 && n == 0 ) 
+                            continue;
+                        
+                        float2 imageShift = make_float2( m, n );
+                        
+                        for( float p = -patchSize / 2.; p <= patchSize / 2.; p += pixelSize )
+                        {
+                            for( float q = -patchSize / 2.; q <= patchSize / 2.; q += pixelSize )
+                            {                          
+                                float2 pixelShift = make_float2( p, q );
+                                float2 thisTexCoord = uv + pixelShift;
+                                float2 thatTexCoord = uv + patchShift + imageShift + pixelShift;
+                                
+                                float4 thisPixel = tex2D( _lightfieldTexture, thisTexCoord.x, thisTexCoord.y );
+                                float4 thatPixel = tex2D( _lightfieldTexture, thatTexCoord.x, thatTexCoord.y );
+                                
+                                score += length( thisPixel - thatPixel );
+                            }
+                        }
+                        
+                        /*float2 imageShift = make_float2( m, n ) * step;
+                        float2 rightBase = leftBase + imageShift * ( microSize + patchSize );
+                        float2 texCoordRight = rightBase + pixelShift;
+                        float4 right = tex2D( _lightfieldTexture, texCoordRight.x, texCoordRight.y );
+                        
+                        score += length( left - right );*/
+                    }
+                }                    
+            }
+        }
+        
+        if( score < bestMatch )
+        {
+            bestSlope = patchSize;
+            bestMatch = score;
+        }
+    }
+    
+    return bestSlope / ( microSize / 2. );
+}
+
+__device__
+float depthEstimation2( float2 uv )
+{  
+    // Passo de uma microimagem em texcoord
+    float sStep = 1. / _cudaKernelParameters.nCameraCollumns;
+    float tStep = 1. / _cudaKernelParameters.nCameraRows;  
+    float2 step = make_float2( sStep, tStep );
+    float2 st = uv / step;
+    
+    int numPatches = 3;
+    int numImages = 1;
+    float bestSlope = 0.;
+    float bestMatch = 10000000000.;  
+    
+    float2 texSize = make_float2( _cudaKernelParameters.nCameraRows, _cudaKernelParameters.nCameraCollumns );
+    float microSize = 1.;// / min( _cudaKernelParameters.nCameraRows, _cudaKernelParameters.nCameraCollumns );
+    float2 p = floorf( uv * texSize );
+    float2 offset = ( uv * texSize ) - p;
+    
+    for( float patchSize = microSize / 2.; patchSize >= 0.; patchSize -= .05 )
+    {
+        float2 leftBase = p * microSize - offset;
+        float score = 0.;
+        
+        for( int i = 0; i < numPatches; i++ )
+        {
+            for( int j = 0; j < numPatches; j++ )
+            {
+                float2 pixelShift = make_float2( i, j );// * patchSize;
+                float2 texCoordLeft = ( leftBase + pixelShift ) / texSize;
+                float4 left = tex2D( _lightfieldTexture, texCoordLeft.x, texCoordLeft.y );
+                
+                for( int m = -numImages; m <= numImages; m++ )
+                {
+                    for( int n = -numImages; n <= numImages; n++ )
+                    {
+                        if( m == 0 && n == 0 ) 
+                            continue;
+                        
+                        float2 imageShift = make_float2( m, n );
+                        float2 rightBase = leftBase + imageShift * ( microSize + patchSize );
+                        float2 texCoordRight = ( rightBase + pixelShift ) / texSize;
+                        float4 right = tex2D( _lightfieldTexture, texCoordRight.x, texCoordRight.y );
+                        
+                        score += length( left - right );
+                    }
+                }                    
+            }
+        }
+        
+        if( score < bestMatch )
+        {
+            bestSlope = patchSize;
+            bestMatch = score;
+        }
+    }
+    
+    return bestSlope / ( microSize / 2. );
+}
+
+__device__
+void mapWorldToTexCoord( Plane& focalPlane, float3 fg, float3 st, float2& uv, float& depth )
 {    
     // Passo de uma microimagem em texcoord
     float sStep = 1. / _cudaKernelParameters.nCameraCollumns;
@@ -145,33 +284,38 @@ void mapWorldToTexCoord( Plane& focalPlane, float3 fg, float3 st, float2& uv )
     
     // Obtem texcoord do raio para a camera em st
     uv.x = ( st.x + .5 + factor.x ) * sStep;
-    uv.y = ( st.y + .5 + factor.y ) * tStep;    
+    uv.y = ( st.y + .5 + factor.y ) * tStep;
+    
+    if( _cudaKernelParameters.isToRenderAsDepthMap )
+        depth = depthEstimation2( uv );
+    else
+        depth = 1.;
 }
 
 __device__
-void trace( Ray& ray, Quad& quad, Plane& focalPlane, float3& hitPoint, float4& collectedColor )
+void trace( Ray& ray, Plane& focalPlane, float3& hitPoint, float4& collectedColor, float& depth )
 {    
     float3 hitPointPlane;
-    bool hit = intersectPlane( ray, focalPlane, &hitPointPlane );
     
-    if( !hit ) 
+    if( !intersectPlane( ray, focalPlane, &hitPointPlane ) )
         return; // Nunca deveria cair aqui        
     
+    // Obtem coordenada no mundo das camera vizinhas
     float3 c0 = make_float3( 0., 0., 0. );
     float3 c1 = make_float3( 0., 0., 0. );
     float3 c2 = make_float3( 0., 0., 0. );
     float3 c3 = make_float3( 0., 0., 0. );
     
-    // Obtem coordenada no mundo das camera vizinhas
     getNeighbourCameras( hitPoint, c0, c1, c2, c3 );
     
     // Mapeia cada raio para texcoord
     float2 uv0, uv1, uv2, uv3;
-    mapWorldToTexCoord( focalPlane, hitPointPlane, c0, uv0 );
-    mapWorldToTexCoord( focalPlane, hitPointPlane, c1, uv1 );
-    mapWorldToTexCoord( focalPlane, hitPointPlane, c2, uv2 );
-    mapWorldToTexCoord( focalPlane, hitPointPlane, c3, uv3 );
-    
+    float depth0, depth1, depth2, depth3;
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c0, uv0, depth0 );
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c1, uv1, depth1 );
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c2, uv2, depth2 );
+    mapWorldToTexCoord( focalPlane, hitPointPlane, c3, uv3, depth3 );        
+
     // Obtem cores de cada camera
     float4 color0, color1, color2, color3;
     color0 = tex2D( _lightfieldTexture, uv0.x, uv0.y );
@@ -179,8 +323,21 @@ void trace( Ray& ray, Quad& quad, Plane& focalPlane, float3& hitPoint, float4& c
     color2 = tex2D( _lightfieldTexture, uv2.x, uv2.y );
     color3 = tex2D( _lightfieldTexture, uv3.x, uv3.y );
     
-    // Blend linear
-    collectedColor = lerp( lerp( lerp( color0, color1, .5 ), color2, .5 ), color3, .5 );
+    if( _cudaKernelParameters.isToRenderAsDepthMap )
+    {
+        //float2 uv = make_float2( hitPoint.x, hitPoint.y );
+        
+        //depth = lerp( lerp( lerp( depth0, depth1, .5 ), depth2, .5 ), depth3, .5 );
+        depth = max( depth0, max( depth1, max( depth2, depth3 ) ) );
+        
+        collectedColor.x = collectedColor.y = collectedColor.z = depth;
+        collectedColor.w = 1.;
+    }
+    else
+    {
+        // Blend linear
+        collectedColor = lerp( lerp( lerp( color0, color1, .5 ), color2, .5 ), color3, .5 );
+    }
 }
 
 __global__
@@ -231,19 +388,21 @@ void d_render( uint* d_output, float* d_depthBuffer, int canvasWidth, int canvas
     if( !hit )
         return;
     
+    float depth = 0;
+    
     // Traça o raio    
-    trace( eyeRay, quad, focalPlane, hitPoint, collectedColor );
-
-    // Calcula profundidade virtual
-    float depth = length( hitPoint - eyeRay.origin ) / length( farPoint - eyeRay.origin );
+    trace( eyeRay, focalPlane, hitPoint, collectedColor, depth );
     
     // Grava saidas
-    d_depthBuffer[ y * canvasWidth + x ] = depth;    
+    d_depthBuffer[ y * canvasWidth + x ] = depth;           
     d_output[ y * canvasWidth + x ] = rgbaFloatToInt( collectedColor );
 }
 
 
-// LightFieldRender
+/**************************************/
+/*          LightFieldRender          */
+/**************************************/
+
 namespace LightField
 {
 

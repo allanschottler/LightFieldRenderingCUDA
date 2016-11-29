@@ -35,9 +35,12 @@ Render::Render( Image* lightFieldImage ) :
     
     _kernelParameters.nCameraCollumns = nCollumns;
     _kernelParameters.nCameraRows = nRows;
+    _kernelParameters.cameraWidth = width;
+    _kernelParameters.cameraHeight = height;
+    _kernelParameters.isToRenderAsDepthMap = false;
     
     _lightFieldTexels = _lightFieldImage->getTexels();
-    initLightFieldTexture( _lightFieldTexels, width, height );   
+    initLightFieldTexture( _lightFieldTexels, nCollumns * width, nRows * height );   
     
     CUDAManager::getInstance()->setDefaultDevice();
 }
@@ -178,7 +181,12 @@ void Render::getBoundingBox( float& xMin, float& xMax, float& yMin, float& yMax,
 void Render::setFocalPlane( float focalPlane )
 {
     _kernelParameters.focalPlane = focalPlane;
-    std::cout << "FOCAL PLANE : " << focalPlane << std::endl;
+}
+
+
+void Render::setRenderAsDepthMap( bool isDepthMap )
+{
+    _kernelParameters.isToRenderAsDepthMap = isDepthMap;
 }
 
 

@@ -43,6 +43,7 @@ MainWindow::MainWindow( std::string title ) :
     _aboutButton = GTK_WIDGET( gtk_builder_get_object( builder, "imagemenuitem10" ) );
         
     _focalPlaneSpinButton = GTK_WIDGET( gtk_builder_get_object( builder, "spinbuttonFocalPlane" ) );
+    _depthMapCheckButton = GTK_WIDGET( gtk_builder_get_object( builder, "checkbuttonDepth" ) );
     
     g_timeout_add( 15, (GSourceFunc)( &MainWindow::onIdle ), this );
     
@@ -54,6 +55,7 @@ MainWindow::MainWindow( std::string title ) :
     g_signal_connect( G_OBJECT( _aboutButton ), "activate", G_CALLBACK( &MainWindow::onAboutButtonClicked ), _dialog );    
     
     g_signal_connect( G_OBJECT( _focalPlaneSpinButton ), "value-changed", G_CALLBACK( &MainWindow::onFocalPlaneChanged ), _dialog );
+    g_signal_connect( G_OBJECT( _depthMapCheckButton ), "toggled", G_CALLBACK( &MainWindow::onDepthMapToggled ), _dialog );
     
     g_object_set_data( ( GObject* ) _dialog, "THIS", ( gpointer )this );
 }
@@ -79,6 +81,8 @@ gboolean MainWindow::onIdle( gpointer pointer )
         ThreadManager::getInstance()->checkThreads();
     
     dialog->_canvas.queueDraw();
+    
+    LightField::Application::getInstance()->printFPS();
     
     return TRUE;
 }
@@ -168,6 +172,21 @@ gboolean MainWindow::onFocalPlaneChanged( GtkWidget* spinbutton, gpointer pointe
     
     float focalPlane = gtk_spin_button_get_value_as_float( GTK_SPIN_BUTTON( dialog->_focalPlaneSpinButton ) );    
     LightField::Application::getInstance()->setFocalPlane( focalPlane );
+    
+    return TRUE;
+}
+
+gboolean MainWindow::onDepthMapToggled( GtkWidget* checkbutton, gpointer pointer )
+{
+    gpointer result = g_object_get_data( ( GObject* ) pointer, "THIS" );
+    
+    if( result == NULL )
+        return FALSE;
+    
+    MainWindow* dialog = reinterpret_cast< MainWindow* >( result );
+    
+    bool isDepthMap = gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( dialog->_depthMapCheckButton ) );    
+    LightField::Application::getInstance()->setRenderAsDepthMap( isDepthMap );
     
     return TRUE;
 }

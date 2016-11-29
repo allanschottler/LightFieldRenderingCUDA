@@ -32,6 +32,10 @@ public:
     
     void setFocalPlane( float focalPlane );
     
+    void setRenderAsDepthMap( bool isDepthMap );
+    
+    void printFPS();
+    
 private:
     
     Application();   
@@ -50,6 +54,8 @@ private:
     Render* _lightFieldRender;
     
     float _focalPlane;
+    
+    bool _isDepthMap;
 };
 
 }

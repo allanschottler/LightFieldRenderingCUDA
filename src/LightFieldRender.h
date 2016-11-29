@@ -48,8 +48,14 @@ public:
         /* Dimensões da câmera plenóptica */
         int nCameraRows, nCameraCollumns;
         
+        /* Dimensões de cada imagem */
+        int cameraWidth, cameraHeight;
+        
         /* Distância do plano focal ao plano das câmeras */
         float focalPlane;
+        
+        /* True se deve estimar profundidade */
+        bool isToRenderAsDepthMap;
     };
     
     /**
@@ -96,11 +102,25 @@ public:
     void setFocalPlane( float focalPlane );
     
     /**
+     * Define se deve estimar depth map
+     * @param texels
+     * @param width
+     * @param height
+     */
+    void setRenderAsDepthMap( bool isDepthMap );
+    
+    /**
      * Computa o fps atual
      * @param elapsedTime
      * @param fps
      */
     void computeFPS( float elapsedTime, float& fps );    
+    
+    /**
+     * Retorna o frame rate
+     * @return 
+     */
+    float getFPS() { return _fps; };
     
 private:    
     

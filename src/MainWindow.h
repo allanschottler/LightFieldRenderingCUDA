@@ -34,6 +34,7 @@ private:
     static gboolean onQuitButtonClicked( GtkWidget* button, gpointer pointer );
     static gboolean onAboutButtonClicked( GtkWidget* button, gpointer pointer );
     static gboolean onFocalPlaneChanged( GtkWidget* spinbutton, gpointer pointer );
+    static gboolean onDepthMapToggled( GtkWidget* checkbutton, gpointer pointer );
     
     std::string _title;
     
@@ -50,6 +51,7 @@ private:
     
     // Sidebar    
     GtkWidget* _focalPlaneSpinButton;  
+    GtkWidget* _depthMapCheckButton;  
 };
 
 #endif /* MAINWINDOW_H */

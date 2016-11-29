@@ -7,6 +7,8 @@
 #include "LightFieldImageLoader.h"
 #include "LightFieldDrawable.h"
 
+#include <iostream>
+
 namespace LightField
 {
     
@@ -16,7 +18,8 @@ Application::Application() :
     _window( new MainWindow( "Light Field Rendering" ) ),
     _lightFieldImage( nullptr ),
     _lightFieldRender( nullptr ),
-    _focalPlane( 1 )
+    _focalPlane( 1 ),
+    _isDepthMap( false )
 {    
     // Configurações de cena
     _scene = new osg::Group;
@@ -109,6 +112,22 @@ void Application::setFocalPlane( float focalPlane )
         
     if( _lightFieldRender )
         _lightFieldRender->setFocalPlane( focalPlane );
+}
+
+
+void Application::setRenderAsDepthMap( bool isDepthMap )
+{
+    _isDepthMap = isDepthMap;
+    
+    if( _lightFieldRender )
+        _lightFieldRender->setRenderAsDepthMap( isDepthMap );
+}
+
+
+void Application::printFPS()
+{
+    if( _lightFieldRender )
+        std::cout << "FPS : " << _lightFieldRender->getFPS() << "\n";
 }
 
 }
