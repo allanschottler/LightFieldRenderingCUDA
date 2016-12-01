@@ -223,6 +223,7 @@ float depthEstimation2( float2 uv )
     float bestSlope = 0.;
     float bestMatch = 10000000000.;  
     
+    float pixelSize = 2. / _cudaKernelParameters.cameraWidth;
     float2 texSize = make_float2( _cudaKernelParameters.nCameraRows, _cudaKernelParameters.nCameraCollumns );
     float microSize = 1.;// / min( _cudaKernelParameters.nCameraRows, _cudaKernelParameters.nCameraCollumns );
     float2 p = floorf( uv * texSize );
@@ -230,14 +231,14 @@ float depthEstimation2( float2 uv )
     
     for( float patchSize = microSize / 2.; patchSize >= 0.; patchSize -= .05 )
     {
-        float2 leftBase = p * microSize - offset;
+        float2 leftBase = p * microSize + offset;// * patchSize;
         float score = 0.;
         
-        for( int i = 0; i < numPatches; i++ )
+        for( int i = -numPatches; i < numPatches; i++ )
         {
-            for( int j = 0; j < numPatches; j++ )
+            for( int j = -numPatches; j < numPatches; j++ )
             {
-                float2 pixelShift = make_float2( i, j );// * patchSize;
+                float2 pixelShift = make_float2( i, j ) * pixelSize;// * patchSize;
                 float2 texCoordLeft = ( leftBase + pixelShift ) / texSize;
                 float4 left = tex2D( _lightfieldTexture, texCoordLeft.x, texCoordLeft.y );
                 
@@ -327,8 +328,8 @@ void trace( Ray& ray, Plane& focalPlane, float3& hitPoint, float4& collectedColo
     {
         //float2 uv = make_float2( hitPoint.x, hitPoint.y );
         
-        //depth = lerp( lerp( lerp( depth0, depth1, .5 ), depth2, .5 ), depth3, .5 );
-        depth = max( depth0, max( depth1, max( depth2, depth3 ) ) );
+        depth = lerp( lerp( lerp( depth0, depth1, .5 ), depth2, .5 ), depth3, .5 );
+        //depth = min( depth0, max( depth1, max( depth2, depth3 ) ) );
         
         collectedColor.x = collectedColor.y = collectedColor.z = depth;
         collectedColor.w = 1.;
